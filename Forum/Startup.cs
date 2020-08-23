@@ -30,14 +30,14 @@ namespace Forum
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<IdentityUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+                    .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -65,6 +65,29 @@ namespace Forum
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+
+            //var serviceProvider = (IServiceProvider) app.ApplicationServices.GetService(typeof(IServiceProvider));
+            CreateRoles(serviceProvider);
+
+        }
+
+        private void CreateRoles(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            string[] roleNames = { "Admin", "Moderator", "User", "Guest" };
+
+            foreach (var roleName in roleNames)
+            {
+                var roleExistsTask = roleManager.RoleExistsAsync(roleName);
+                roleExistsTask.Wait();
+
+                if (!roleExistsTask.Result)
+                {
+                    var createRoleTask = roleManager.CreateAsync(new IdentityRole(roleName));
+                    createRoleTask.Wait();
+                }
+            }
         }
     }
 }
