@@ -13,6 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Forum.Models.Entities;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Forum.Services;
 
 namespace Forum
 {
@@ -35,6 +37,8 @@ namespace Forum
                     .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
+            services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
+            services.AddSingleton<IEmailSender, MailKitEmailSender>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,7 +71,6 @@ namespace Forum
                 endpoints.MapRazorPages();
             });
 
-            //var serviceProvider = (IServiceProvider) app.ApplicationServices.GetService(typeof(IServiceProvider));
             CreateRoles(serviceProvider);
 
         }
