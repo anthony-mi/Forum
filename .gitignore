@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Hide email and password of SMTP-server from public access
+Forum/appsettings.json
+Forum/appsettings.Development.json
+
 # User-specific files
 *.rsuser
 *.suo
