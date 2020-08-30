@@ -15,5 +15,6 @@ namespace Forum.Data
         }
 
         public DbSet<Image> Images { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }
