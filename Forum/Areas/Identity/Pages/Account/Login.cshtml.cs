@@ -48,8 +48,7 @@ namespace Forum.Areas.Identity.Pages.Account
         public class InputModel
         {
             [Required]
-            [EmailAddress]
-            public string Email { get; set; }
+            public string EmailOrUsername { get; set; }
 
             [Required]
             [DataType(DataType.Password)]
@@ -82,9 +81,15 @@ namespace Forum.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                try
+                User user = GetUserByEmail(Input.EmailOrUsername);
+
+                if (user == null)
                 {
-                    var user = _dbContext.Users.Where(u => u.Email.Equals(Input.Email)).Single();
+                    user = GetUserByUsername(Input.EmailOrUsername);
+                }
+
+                if (user != null)
+                {
                     var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
 
                     if (result.Succeeded)
@@ -112,14 +117,47 @@ namespace Forum.Areas.Identity.Pages.Account
                         return Page();
                     }
                 }
-                catch (InvalidOperationException)
+                else
                 {
-                    // the user is not exist
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return Page();
                 }
             }
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }
+
+        private User GetUserByEmail(string email)
+        {
+            User user = null;
+
+            try
+            {
+                user = _dbContext.Users.Where(u => u.Email.Equals(email)).Single();
+            }
+            catch (InvalidOperationException)
+            {
+                // the user is not exist
+            }
+
+            return user;
+        }
+
+        private User GetUserByUsername(string username)
+        {
+            User user = null;
+
+            try
+            {
+                user = _dbContext.Users.Where(u => u.UserName.Equals(username)).Single();
+            }
+            catch (InvalidOperationException)
+            {
+                // the user is not exist
+            }
+
+            return user;
         }
     }
 }
