@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Forum.Data;
 using Forum.Models.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -22,17 +23,20 @@ namespace Forum.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
+        private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
 
         public RegisterModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
+            ApplicationDbContext dbContext,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _dbContext = dbContext;
             _logger = logger;
             _emailSender = emailSender;
         }
@@ -86,6 +90,18 @@ namespace Forum.Areas.Identity.Pages.Account
                     Registration = DateTime.Now
                 };
 
+                if(EmailAlreadyExists(user.Email))
+                {
+                    ModelState.AddModelError(string.Empty, $"User with email '{user.Email}' already exists.");
+                    return Page();
+                }
+
+                if (UsernameAlreadyExists(user.UserName))
+                {
+                    ModelState.AddModelError(string.Empty, $"User with username '{user.UserName}' already exists.");
+                    return Page();
+                }
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
@@ -121,6 +137,32 @@ namespace Forum.Areas.Identity.Pages.Account
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }
+
+        private bool EmailAlreadyExists(string email)
+        {
+            bool exists = false;
+
+            var userWithSuchEmail = _dbContext.Users.Where(u => u.Email.Equals(email)).FirstOrDefault();
+            if(userWithSuchEmail != null && userWithSuchEmail.EmailConfirmed)
+            {
+                exists = true;
+            }
+
+            return exists;
+        }
+
+        private bool UsernameAlreadyExists(string username)
+        {
+            bool exists = false;
+
+            var userWithSuchUsername = _dbContext.Users.Where(u => u.UserName.Equals(username)).FirstOrDefault();
+            if (userWithSuchUsername != null && userWithSuchUsername.EmailConfirmed)
+            {
+                exists = true;
+            }
+
+            return exists;
         }
     }
 }
