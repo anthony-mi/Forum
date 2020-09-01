@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Forum.Models.Entities;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Forum.Services;
+using Microsoft.Extensions.Options;
 
 namespace Forum
 {
@@ -39,6 +40,7 @@ namespace Forum
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
+            services.Configure<UserSettings>(Configuration.GetSection("UserSettings"));
             services.AddSingleton<IEmailSender, MailKitEmailSender>();
         }
 
@@ -73,7 +75,7 @@ namespace Forum
             });
 
             CreateRoles(serviceProvider);
-
+            CreateDefaultImages(serviceProvider);
         }
 
         private void CreateRoles(IServiceProvider serviceProvider)
@@ -92,6 +94,22 @@ namespace Forum
                     var createRoleTask = roleManager.CreateAsync(new IdentityRole(roleName));
                     createRoleTask.Wait();
                 }
+            }
+        }
+
+        private void CreateDefaultImages(IServiceProvider serviceProvider)
+        {
+            var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+            var userSettings = serviceProvider.GetRequiredService<IOptions<UserSettings>>();
+            var defaultProfilePicture = userSettings.Value.DefaultProfilePicture;
+
+            var img = dbContext.Images.Where(i => i.Filename == defaultProfilePicture).FirstOrDefault();
+
+            if(img == null)
+            {
+                var defaultImage = new Image { Filename = defaultProfilePicture };
+                dbContext.Images.Add(defaultImage);
+                dbContext.SaveChanges();
             }
         }
     }
