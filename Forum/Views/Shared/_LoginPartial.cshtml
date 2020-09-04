@@ -1,0 +1,60 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Forum.Models.Entities;
+@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq;
+
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject Forum.Data.ApplicationDbContext Context
+@inject IHostingEnvironment Environment
+@{
+    var user = UserManager.GetUserAsync(User).Result;
+    var pathToProfilePicture = string.Empty;
+
+    if (user != null)
+    {
+        user = Context.Users.Include(e => e.ProfilePicture).Where(u => u.Id == user.Id).SingleOrDefault();
+        pathToProfilePicture = $"Resources/Images/{user.ProfilePicture.Filename}";
+    }
+}
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User) && user != null)
+    {
+        <li class="nav-item">
+            
+        </li>
+        <li class="nav-item dropdown">
+            <img alt="@user.UserName" width="20" height="20"
+                 src="@pathToProfilePicture" class="avatar avatar-user">
+            <a class="nav-link dropdown-toggle"
+               href="#" id="profile-dropdown"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@user.UserName</a>
+            <div class="dropdown-menu" aria-labelledby="profile-dropdown">
+                <a class="dropdown-item" href="#">Your profile</a>
+                <a class="dropdown-item" href="#">Settings</a>
+                <form class="form-inline dropdown-item" 
+                      asp-area="Identity" asp-page="/Account/Logout" 
+                      asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
+                      style="padding-top: 0;">
+                    <button type="submit" class="btn text-dark" style="padding: 0;">Logout</button>
+                </form>
+            </div>
+        </li>
+        @*<li class="nav-item">
+                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                    <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+                </form>
+            </li>*@
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+    }
+</ul>
