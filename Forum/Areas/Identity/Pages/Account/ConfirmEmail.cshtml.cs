@@ -48,33 +48,15 @@ namespace Forum.Areas.Identity.Pages.Account
             code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
 
-            if(result.Succeeded)
+            if (result.Succeeded)
             {
-                SetUserDefaultParams(user);
+                //SetUserDefaultParams(user);
+                _userManager.AddToRoleAsync(user, "User").Wait();
             }
 
             StatusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
             ViewData["StatusMessage"] = StatusMessage;
             return Page();
-        }
-
-        private void SetUserDefaultParams(User user)
-        {
-            _userManager.AddToRoleAsync(user, "User");
-
-            user.CountOfMessages = 0;
-            user.LastActivity = DateTime.Now;
-            user.Reputation = 0;
-            user.Registration = DateTime.Now;
-            if (_userSettings != null)
-            {
-                var image = _dbContext.Images
-                    .Where(
-                    i => i.Filename == _userSettings.DefaultProfilePicture)
-                    .FirstOrDefault();
-                user.ProfilePicture = image;
-            }
-            _userManager.UpdateAsync(user);
         }
     }
 }

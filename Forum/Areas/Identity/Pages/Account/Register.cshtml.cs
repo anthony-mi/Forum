@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Forum.Areas.Identity.Pages.Account
 {
@@ -23,6 +24,7 @@ namespace Forum.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
+        private readonly UserSettings _userSettings;
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
@@ -30,12 +32,14 @@ namespace Forum.Areas.Identity.Pages.Account
         public RegisterModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
+            IOptions<UserSettings> userSettings,
             ApplicationDbContext dbContext,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _userSettings = userSettings.Value;
             _dbContext = dbContext;
             _logger = logger;
             _emailSender = emailSender;
@@ -102,6 +106,8 @@ namespace Forum.Areas.Identity.Pages.Account
                     return Page();
                 }
 
+                SetUserDefaultParams(user);
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
@@ -137,6 +143,24 @@ namespace Forum.Areas.Identity.Pages.Account
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }
+
+        private void SetUserDefaultParams(User user)
+        {
+            user.About = string.Empty;
+            user.CountOfMessages = 0;
+            user.LastActivity = DateTime.Now;
+            user.Reputation = 0;
+            user.Registration = DateTime.Now;
+            if (_userSettings != null)
+            {
+                var image = _dbContext.Images
+                    .Where(
+                    i => i.Filename == _userSettings.DefaultProfilePicture)
+                    .FirstOrDefault();
+                user.ProfilePicture = image;
+            }
+            _userManager.UpdateAsync(user).Wait();
         }
 
         private bool EmailAlreadyExists(string email)
