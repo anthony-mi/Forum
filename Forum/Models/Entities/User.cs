@@ -12,8 +12,6 @@ namespace Forum.Models.Entities
     {
         [DefaultValue(0)]
         public uint CountOfMessages { get; set; }
-        [DefaultValue(0)]
-        public int Reputation { get; set; }
         public int? ProfilePictureId { get; set; }
         public virtual Image ProfilePicture { get; set; }
         [DefaultValue("")]

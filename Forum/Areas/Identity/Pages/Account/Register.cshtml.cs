@@ -150,7 +150,6 @@ namespace Forum.Areas.Identity.Pages.Account
             user.About = string.Empty;
             user.CountOfMessages = 0;
             user.LastActivity = DateTime.Now;
-            user.Reputation = 0;
             user.Registration = DateTime.Now;
             if (_userSettings != null)
             {
