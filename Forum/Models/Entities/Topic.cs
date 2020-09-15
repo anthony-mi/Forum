@@ -13,13 +13,13 @@ namespace Forum.Models.Entities
 
         public string Body { get; set; }
 
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; }
 
         public virtual User Author { get; set; }
 
-        public DateTime Creation { get; set; }
+        public DateTime Created { get; set; }
 
-        public DateTime? Editing { get; set; }
+        public DateTime? Edited { get; set; }
 
         public int? EditorId { get; set; }
 

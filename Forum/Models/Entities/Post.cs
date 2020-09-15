@@ -11,7 +11,7 @@ namespace Forum.Models.Entities
 
         public string Body { get; set; }
 
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; }
 
         public virtual User Author { get; set; }
 
