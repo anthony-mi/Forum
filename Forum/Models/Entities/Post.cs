@@ -19,7 +19,7 @@ namespace Forum.Models.Entities
 
         public DateTime? Edited { get; set; }
 
-        public int? EditorId { get; set; }
+        public string EditorId { get; set; }
 
         public virtual User Editor { get; set; }
     }
