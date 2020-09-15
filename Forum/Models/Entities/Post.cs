@@ -15,9 +15,9 @@ namespace Forum.Models.Entities
 
         public virtual User Author { get; set; }
 
-        public DateTime Creation { get; set; }
+        public DateTime Created { get; set; }
 
-        public DateTime? Editing { get; set; }
+        public DateTime? Edited { get; set; }
 
         public int? EditorId { get; set; }
 
