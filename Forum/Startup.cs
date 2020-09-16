@@ -45,7 +45,7 @@ namespace Forum
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider, IConfiguration config)
         {
             if (env.IsDevelopment())
             {
@@ -75,6 +75,7 @@ namespace Forum
             });
 
             CreateRoles(serviceProvider);
+            CreateSections(config, serviceProvider);
             CreateDefaultImages(serviceProvider);
         }
 
@@ -93,6 +94,42 @@ namespace Forum
                 {
                     var createRoleTask = roleManager.CreateAsync(new IdentityRole(roleName));
                     createRoleTask.Wait();
+                }
+            }
+        }
+
+        private void CreateSections(IConfiguration config, IServiceProvider serviceProvider)
+        {
+            IConfigurationSection configurationSection = config.GetSection("Sections");
+            var sections = configurationSection.AsEnumerable();
+
+            if(sections.Count() == 0)
+            {
+                return;
+            }
+
+            sections = sections.Reverse();
+
+            var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+
+            foreach (var section in sections)
+            {
+                if(section.Value == null)
+                {
+                    continue;
+                }
+
+                var searchingSection = dbContext.Sections.Where(s => s.Name.Equals(section.Value)).FirstOrDefault();
+
+                if (searchingSection == null)
+                {
+                    var newSection = new Section
+                    {
+                        Name = section.Value,
+                        Topics = new List<Topic>()
+                    };
+                    dbContext.Sections.Add(newSection);
+                    dbContext.SaveChanges();
                 }
             }
         }
