@@ -4,18 +4,20 @@ using Forum.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Forum.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200927013043_TopicsRefactoring")]
+    partial class TopicsRefactoring
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.8")
+                .HasAnnotation("ProductVersion", "3.1.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -56,7 +58,7 @@ namespace Forum.Data.Migrations
                     b.Property<string>("EditorId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TopicId")
+                    b.Property<int?>("TopicId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -107,7 +109,7 @@ namespace Forum.Data.Migrations
                     b.Property<string>("EditorId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("SectionId")
+                    b.Property<int?>("SectionId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -122,6 +124,29 @@ namespace Forum.Data.Migrations
                     b.HasIndex("SectionId");
 
                     b.ToTable("Topics");
+                });
+
+            modelBuilder.Entity("Forum.ViewModels.TopicViewModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Body")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(60)")
+                        .HasMaxLength(60);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TopicViewModel");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -360,11 +385,9 @@ namespace Forum.Data.Migrations
                         .WithMany()
                         .HasForeignKey("EditorId");
 
-                    b.HasOne("Forum.Models.Entities.Topic", "Topic")
+                    b.HasOne("Forum.Models.Entities.Topic", null)
                         .WithMany("Posts")
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TopicId");
                 });
 
             modelBuilder.Entity("Forum.Models.Entities.Topic", b =>
@@ -377,11 +400,9 @@ namespace Forum.Data.Migrations
                         .WithMany()
                         .HasForeignKey("EditorId");
 
-                    b.HasOne("Forum.Models.Entities.Section", "Section")
+                    b.HasOne("Forum.Models.Entities.Section", null)
                         .WithMany("Topics")
-                        .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SectionId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

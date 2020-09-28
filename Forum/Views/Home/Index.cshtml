@@ -1,8 +1,27 @@
-﻿@{
+﻿@model Forum.ViewModels.HomeViewModel
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@*<div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    </div>*@
+
+@{
+    foreach (var section_ in Model.Sections)
+    {
+    <div class="list-group m-3">
+        <a href="@Url.Action("Index", "Sections", new { id = section_.Id })" class="list-group-item list-group-item-action active">
+            @section_.Name
+        </a>
+        @foreach (var topic in section_.LastTopics)
+        {
+            <a href="#" class="list-group-item list-group-item-action">@topic.Title</a>
+        }
+    </div>
+    }
+}
+
+

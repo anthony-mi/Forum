@@ -1,0 +1,40 @@
+﻿@model Forum.ViewModels.SectionViewModel
+
+@using Microsoft.AspNetCore.Identity
+@using Forum.Models.Entities;
+
+@inject SignInManager<User> SignInManager
+
+@{
+    ViewData["Title"] = $"{Model.Name} section";
+}
+
+<h1>@Model.Name</h1>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <a href="@Url.Action("Create", "Topics", new { sectionId = Model.Id })" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Create new topic</a>
+}
+
+<table class="table table-striped m-5">
+    <thead>
+        <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Count of posts</th>
+            <th scope="col">Date created</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var topic in Model.LastTopics)
+        {
+        <tr>
+            <td>@topic.Title</td>
+            <td>@topic.Author.UserName</td>
+            <td>@topic.Posts.Count()</td>
+            <td>@topic.Created.ToShortDateString()</td>
+        </tr>
+        }
+    </tbody>
+</table>
+
