@@ -25,6 +25,10 @@ namespace Forum.Models.Entities
 
         public virtual User Editor { get; set; }
 
-        public virtual IEnumerable<Post> Posts { get; set; }
+        public virtual ICollection<Post> Posts { get; set; }
+
+        public int SectionId { get; set; }
+
+        public virtual Section Section { get; set; }
     }
 }

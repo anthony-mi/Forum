@@ -22,5 +22,9 @@ namespace Forum.Models.Entities
         public string EditorId { get; set; }
 
         public virtual User Editor { get; set; }
+
+        public int TopicId { get; set; }
+
+        public Topic Topic { get; set; }
     }
 }

@@ -17,16 +17,10 @@ namespace Forum.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<User> _userManager;
-        private readonly UserSettings _userSettings;
-        private readonly ApplicationDbContext _dbContext;
 
-        public ConfirmEmailModel(UserManager<User> userManager,
-            IOptions<UserSettings> userSettings,
-            ApplicationDbContext dbContext)
+        public ConfirmEmailModel(UserManager<User> userManager)
         {
             _userManager = userManager;
-            _userSettings = userSettings.Value;
-            _dbContext = dbContext;
         }
 
         [TempData]
