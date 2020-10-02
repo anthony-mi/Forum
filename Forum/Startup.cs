@@ -119,14 +119,15 @@ namespace Forum
                     continue;
                 }
 
-                var searchingSection = dbContext.Sections.Where(s => s.Name.Equals(section.Value)).FirstOrDefault();
+                var searchingSection = dbContext.Sections.FirstOrDefault(s => s.Name.Equals(section.Value));
 
                 if (searchingSection == null)
                 {
                     var newSection = new Section
                     {
                         Name = section.Value,
-                        Topics = new List<Topic>()
+                        Topics = new List<Topic>(),
+                        Accessibility = Accessibility.FullAccess
                     };
                     dbContext.Sections.Add(newSection);
                     dbContext.SaveChanges();
