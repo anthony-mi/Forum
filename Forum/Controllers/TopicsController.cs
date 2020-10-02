@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,15 +32,37 @@ namespace Forum.Controllers
         }
 
         // GET: TopicsController/Details/5
-        public ActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            return View();
+            var topic = _dbContext.Topics.Include(t => t.Posts).FirstOrDefault(t => t.Id == id);
+
+            if (topic == null)
+            {
+                return Error();
+            }
+
+            // Explicit loading of dependent data. The EF did not perform either lazy or explicit data loading.
+            // Therefore, I had to implement this little crutch.
+            // Discussion of this problem: stackoverflow.com/questions/64094376
+            topic.Author = _dbContext.Users.Where(u => u.Id == topic.AuthorId).FirstOrDefault();
+            topic.Posts = _dbContext.Posts.Where(p => p.TopicId == topic.Id).ToList();
+
+            foreach (var post in topic.Posts)
+            {
+                post.Author = _dbContext.Users.FirstOrDefault(u => u.Id == post.AuthorId);
+            }
+
+            var viewModel = new TopicViewModel(topic, Request);
+            return View(viewModel);
         }
 
         // GET: TopicsController/Create
         public ActionResult Create(int sectionId)
         {
-            return View(new TopicViewModel { SectionId = sectionId });
+            var vm = new TopicViewModel(Request);
+            vm.SectionId = sectionId;
+
+            return View(vm);
         }
 
         // POST: TopicsController/Create
@@ -51,7 +74,7 @@ namespace Forum.Controllers
             {
                 var user = _userManager.GetUserAsync(HttpContext.User).Result;
 
-                var section = _dbContext.Sections.Where(s => s.Id == viewModel.SectionId).FirstOrDefault();
+                var section = _dbContext.Sections.FirstOrDefault(s => s.Id == viewModel.SectionId);
 
                 if (section == null)
                 {

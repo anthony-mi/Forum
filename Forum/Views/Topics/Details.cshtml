@@ -1,0 +1,27 @@
+﻿@model Forum.ViewModels.TopicViewModel
+
+@{
+    ViewData["Title"] = "Topic details";
+}
+
+<h1>@Model.Title</h1>
+<h2>@Model.Body</h2>
+<h3>@Model.Author.UserName</h3>
+
+@foreach(var post in Model.Posts)
+{
+    <strong>@post.Author.UserName</strong>
+    <p>@post.Body</p>
+}
+
+<form asp-action="create" asp-controller="posts" method="post">
+    <div class="form-group">
+        <textarea name="body" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+        <input type="hidden" name="topicId" value="@Model.Id">
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create answer" class="btn btn-primary" />
+    </div>
+</form>
