@@ -35,7 +35,7 @@ namespace Forum.Controllers
                 return Error();
             }
 
-            // Explicit loading of dependent data. The system did not perform either lazy or explicit data loading.
+            // Explicit loading of dependent data. The EF did not perform either lazy or explicit data loading.
             // Therefore, I had to implement this little crutch.
             // Discussion of this problem: stackoverflow.com/questions/64094376
             section.Topics = _dbContext.Topics.Where(t => t.SectionId == section.Id).Include(t => t.Author).ToList();
@@ -46,7 +46,7 @@ namespace Forum.Controllers
                 topic.Posts = _dbContext.Posts.Where(t => t.TopicId == topic.Id).ToList();
             }
 
-            var viewModel = new SectionViewModel(section, topicsPerPage, _dbContext);
+            var viewModel = new SectionViewModel(section, topicsPerPage, _dbContext, Request);
             return View(viewModel);
         }
 

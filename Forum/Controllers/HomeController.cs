@@ -24,7 +24,7 @@ namespace Forum.Controllers
 
         public IActionResult Index()
         {
-            var viewModel = new HomeViewModel(_dbContext);
+            var viewModel = new HomeViewModel(_dbContext, Request);
             return View(viewModel);
         }
 
