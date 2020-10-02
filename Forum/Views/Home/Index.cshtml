@@ -1,5 +1,11 @@
 ﻿@model Forum.ViewModels.HomeViewModel
 
+
+@using Microsoft.AspNetCore.Identity
+@using Forum.Models.Entities;
+
+@inject UserManager<User> UserManager
+
 @{
     ViewData["Title"] = "Home Page";
 }
@@ -10,17 +16,30 @@
     </div>*@
 
 @{
+    var user = UserManager.GetUserAsync(User).Result;
+    var userRoles = await UserManager.GetRolesAsync(user);
+
     foreach (var section_ in Model.Sections)
     {
-    <div class="list-group m-3">
-        <a href="@Url.Action("Index", "Sections", new { id = section_.Id })" class="list-group-item list-group-item-action active">
-            @section_.Name
-        </a>
-        @foreach (var topic in section_.LastTopics)
+        bool displaySection =
+            section_.Accessibility == Accessibility.FullAccess ||
+            (section_.Accessibility == Accessibility.OnlyForUsers && userRoles.Contains("User")) ||
+            (section_.Accessibility == Accessibility.ReadonlyForUsers && userRoles.Contains("User"));
+
+        if (displaySection)
         {
-            <a href="#" class="list-group-item list-group-item-action">@topic.Title</a>
+            <div class="list-group m-3">
+                <a href="@Url.Action("Index", "Sections", new { id = section_.Id })" class="list-group-item list-group-item-action active">
+                    @section_.Name
+                </a>
+                @foreach (var topic in section_.LastTopics)
+                {
+                    <a href="@Url.Action("Details", "Topics", new { id = topic.Id })" class="list-group-item list-group-item-action">
+                        @topic.Title
+                    </a>
+                }
+            </div>
         }
-    </div>
     }
 }
 
