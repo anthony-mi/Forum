@@ -5,6 +5,7 @@ using Forum.Models.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Forum.ViewModels;
 
 namespace Forum.Data
 {
@@ -17,6 +18,32 @@ namespace Forum.Data
         {
 
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Section>()
+                .HasMany(s => s.Topics)
+                .WithOne(t => t.Section)
+                .HasForeignKey(prop => prop.SectionId);
+
+            modelBuilder.Entity<Topic>()
+                .HasMany(t => t.Posts)
+                .WithOne(p => p.Topic)
+                .HasForeignKey(prop => prop.TopicId);
+
+            base.OnModelCreating(modelBuilder);
+        }
+
+        //protected override void OnModelCreating(ModelBuilder builder)
+        //{
+        //    builder.Entity<Section>(entity =>
+        //    {
+        //        entity.Property(e => e.Name)
+        //            .IsRequired();
+        //    });
+
+        //    base.OnModelCreating(builder);
+        //}
 
         public DbSet<Image> Images { get; set; }
         public DbSet<User> Users { get; set; }
