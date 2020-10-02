@@ -12,5 +12,6 @@ namespace Forum.Models.Entities
         [Index("IX_UniqueKeyInt", IsUnique = true)]
         public string Name { get; set; }
         public virtual IEnumerable<Topic> Topics { get; set; }
+        public Accessibility Accessibility { get; set; }
     }
 }

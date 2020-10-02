@@ -30,5 +30,7 @@ namespace Forum.Models.Entities
         public int SectionId { get; set; }
 
         public virtual Section Section { get; set; }
+
+        public Accessibility Accessibility { get; set; }
     }
 }
