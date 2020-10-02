@@ -1,4 +1,6 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@model Forum.ViewModels.BaseViewModel
+
+@using Microsoft.AspNetCore.Identity
 @using Forum.Models.Entities;
 @using Microsoft.AspNetCore.Hosting;
 @using Microsoft.EntityFrameworkCore;
@@ -15,7 +17,10 @@
     if (user != null)
     {
         user = Context.Users.Include(e => e.ProfilePicture).Where(u => u.Id == user.Id).SingleOrDefault();
-        pathToProfilePicture = $"Resources/Images/{user.ProfilePicture.Filename}";
+        //pathToProfilePicture = $"Resources/Images/{user.ProfilePicture.Filename}";
+        //pathToProfilePicture = Environment.WebRootFileProvider.GetFileInfo($"Resources/Images/{user.ProfilePicture.Filename}")?.PhysicalPath;
+        //$"{this.Request.Scheme}://{this.Request.Host}";
+        pathToProfilePicture = $"{Model.RequestScheme}://{Model.RequestHost}/Resources/Images/{user.ProfilePicture.Filename}";
     }
 }
 
@@ -23,7 +28,7 @@
     @if (SignInManager.IsSignedIn(User) && user != null)
     {
         <li class="nav-item">
-            
+
         </li>
         <li class="nav-item dropdown">
             <img alt="@user.UserName" width="20" height="20"
@@ -32,10 +37,10 @@
                href="#" id="profile-dropdown"
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@user.UserName</a>
             <div class="dropdown-menu" aria-labelledby="profile-dropdown">
-                <a class="dropdown-item" href="#">Your profile</a>
+                <a class="dropdown-item" href="@Url.Action("Index", "User", new { area = "" })">Your profile</a>
                 <a class="dropdown-item" href="#">Settings</a>
-                <form class="form-inline dropdown-item" 
-                      asp-area="Identity" asp-page="/Account/Logout" 
+                <form class="form-inline dropdown-item"
+                      asp-area="Identity" asp-page="/Account/Logout"
                       asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
                       style="padding-top: 0;">
                     <button type="submit" class="btn text-dark" style="padding: 0;">Logout</button>

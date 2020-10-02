@@ -1,29 +1,34 @@
 ﻿using Forum.Data;
 using Forum.Models.Entities;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Forum.ViewModels
 {
-    public class SectionViewModel
+    public class SectionViewModel : BaseViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public IEnumerable<Topic> LastTopics { get; set; }
+        public Accessibility Accessibility { get; set; }
 
-        public SectionViewModel(Section section, int countOfTopics, ApplicationDbContext dbContext)
+        public SectionViewModel(
+            Section section, 
+            int countOfTopics, 
+            ApplicationDbContext dbContext,
+            HttpRequest request) : base(request)
         {
             Id = section.Id;
             Name = section.Name;
+            Accessibility = section.Accessibility;
 
             if(section.Topics == null)
             {
-                LastTopics = new List<Topic>();
+                section.Topics = dbContext.Topics.Where(t => t.SectionId == section.Id).ToList();
             }
-            else
-            {
-                LastTopics = section.Topics.OrderBy(t => t.Created).Take(countOfTopics);
-            }
+
+            LastTopics = section.Topics.OrderBy(t => t.Created).Take(countOfTopics);
         }
 
         //private IEnumerable<Topic> GetLastTopics(string sectionName, ApplicationDbContext dbContext, int countOfTopics)
