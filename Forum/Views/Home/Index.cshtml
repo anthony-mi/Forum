@@ -17,7 +17,12 @@
 
 @{
     var user = UserManager.GetUserAsync(User).Result;
-    var userRoles = await UserManager.GetRolesAsync(user);
+    List<string> userRoles = new List<string> { "Guest" };
+
+    if(user != null)
+    {
+        userRoles = await UserManager.GetRolesAsync(user) as List<string>;
+    }
 
     foreach (var section_ in Model.Sections)
     {
