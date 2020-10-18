@@ -11,19 +11,11 @@ namespace Forum.ViewModels
     {
         private const int countOfTopicsInsideSection = 5;
 
-        public IEnumerable<SectionViewModel> Sections { get; set; }
+        public IList<SectionViewModel> Sections { get; set; }
 
-        public HomeViewModel(ApplicationDbContext dbContext, HttpRequest request) : base(request)
+        public HomeViewModel(HttpRequest request) : base(request)
         {
-            Sections = new List<SectionViewModel>();
-
-            var sections = dbContext.Sections.ToArray();
-
-            foreach(var section in sections)
-            {
-                var vm = new SectionViewModel(section, countOfTopicsInsideSection, dbContext, request);
-                (Sections as List<SectionViewModel>).Add(vm);
-            }
+            
         }
     }
 }

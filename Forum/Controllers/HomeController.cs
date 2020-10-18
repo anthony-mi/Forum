@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using Forum.Models;
 using Forum.ViewModels;
 using Forum.Data;
+using Forum.Models.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Forum.Controllers
 {
@@ -15,17 +17,29 @@ namespace Forum.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _dbContext;
+        private readonly UserManager<User> _userManager;
+        private readonly SectionsController _sectionsController;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext dbContext)
+        private const int _MAX_COUNT_OF_LAST_TOPICS = 5;
+
+        public HomeController(
+            ILogger<HomeController> logger, 
+            ApplicationDbContext dbContext, 
+            UserManager<User> userManager,
+            SectionsController sectionsController)
         {
             _logger = logger;
             _dbContext = dbContext;
+            _userManager = userManager;
+            _sectionsController = sectionsController;
         }
 
         public IActionResult Index()
         {
-            var viewModel = new HomeViewModel(_dbContext, Request);
-            return View(viewModel);
+            var homeViewModel = new HomeViewModel(Request);
+            _sectionsController.ControllerContext = ControllerContext;
+            homeViewModel.Sections = _sectionsController.GetAllSections(_MAX_COUNT_OF_LAST_TOPICS).Result;
+            return View(homeViewModel);
         }
 
         public IActionResult Privacy()

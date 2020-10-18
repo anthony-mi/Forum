@@ -16,35 +16,19 @@
     </div>*@
 
 @{
-    var user = UserManager.GetUserAsync(User).Result;
-    List<string> userRoles = new List<string> { "Guest" };
-
-    if(user != null)
-    {
-        userRoles = await UserManager.GetRolesAsync(user) as List<string>;
-    }
-
     foreach (var section_ in Model.Sections)
     {
-        bool displaySection =
-            section_.Accessibility == Accessibility.FullAccess ||
-            (section_.Accessibility == Accessibility.OnlyForUsers && userRoles.Contains("User")) ||
-            (section_.Accessibility == Accessibility.ReadonlyForUsers && userRoles.Contains("User"));
-
-        if (displaySection)
+    <div class="list-group m-3">
+        <a href="@Url.Action("Index", "Sections", new { id = section_.Id })" class="list-group-item list-group-item-action active">
+            @section_.Name
+        </a>
+        @foreach (var topic in section_.LastTopics)
         {
-            <div class="list-group m-3">
-                <a href="@Url.Action("Index", "Sections", new { id = section_.Id })" class="list-group-item list-group-item-action active">
-                    @section_.Name
-                </a>
-                @foreach (var topic in section_.LastTopics)
-                {
-                    <a href="@Url.Action("Details", "Topics", new { id = topic.Id })" class="list-group-item list-group-item-action">
-                        @topic.Title
-                    </a>
-                }
-            </div>
+            <a href="@Url.Action("Details", "Topics", new { id = topic.Id })" class="list-group-item list-group-item-action">
+                @topic.Title
+            </a>
         }
+    </div>
     }
 }
 

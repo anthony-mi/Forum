@@ -34,14 +34,21 @@ namespace Forum
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddIdentity<User, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                     .AddEntityFrameworkStores<ApplicationDbContext>()
                     .AddDefaultTokenProviders();
+
             services.AddControllersWithViews();
             services.AddRazorPages();
+
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.Configure<UserSettings>(Configuration.GetSection("UserSettings"));
+
             services.AddSingleton<IEmailSender, MailKitEmailSender>();
+            services.AddSingleton<AccessibilityChecker>();
+
+            services.AddMvc().AddControllersAsServices();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
