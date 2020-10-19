@@ -4,15 +4,36 @@
     ViewData["Title"] = "Topic details";
 }
 
-<h1>@Model.Title</h1>
-<h2>@Model.Body</h2>
-<h3>@Model.Author.UserName</h3>
+<div class="my-3 p-3 bg-white rounded box-shadow">
+    <strong class="d-block text-gray-dark float-left mr-3 badge badge-primary">@@@Model.Author.UserName</strong>
+    <h3 class="border-bottom border-gray pb-2 mb-0">@Model.Title</h3>
+    <br />
+    @{
+        if (!string.IsNullOrEmpty(Model.Body))
+        {
+            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                <strong class="d-block text-gray-dark">@Model.Body</strong>
+            </p>
+        }
+    }
 
-@foreach(var post in Model.Posts)
-{
-    <strong>@post.Author.UserName</strong>
-    <p>@post.Body</p>
-}
+    @foreach (var post in Model.Posts)
+    {
+        <strong></strong>
+        <p></p>
+
+        <div class="media text-muted pt-3">
+            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                <strong class="d-block text-gray-dark">@@@post.Author.UserName</strong>
+                @post.Body
+            </p>
+        </div>
+    }
+
+    <small class="d-block text-right mt-3">
+        <a href="#">All updates</a>
+    </small>
+</div>
 
 <form asp-action="create" asp-controller="posts" method="post">
     <div class="form-group">

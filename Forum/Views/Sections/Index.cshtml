@@ -29,7 +29,7 @@
         @foreach (var topic in Model.LastTopics)
         {
         <tr>
-            <td>@topic.Title</td>
+            <td><a href="@Url.Action("Details", "Topics", new { id = topic.Id })">@topic.Title</a></td>
             <td>@topic.Author.UserName</td>
             <td>@topic.Posts.Count()</td>
             <td>@topic.Created.ToShortDateString()</td>
