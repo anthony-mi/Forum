@@ -1,12 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Forum.Models.Entities
 {
     public class Topic
     {
+        private readonly ILazyLoader _lazyLoader;
+
+        private ICollection<Post> _posts;
+
+        public Topic()
+        {
+        }
+
+        public Topic(ILazyLoader lazyLoader)
+        {
+            _lazyLoader = lazyLoader;
+        }
+
         public int Id { get; set; }
 
         public string Title { get; set; }
@@ -25,7 +37,11 @@ namespace Forum.Models.Entities
 
         public virtual User Editor { get; set; }
 
-        public virtual ICollection<Post> Posts { get; set; }
+        public virtual ICollection<Post> Posts
+        {
+            get => _lazyLoader.Load(this, ref _posts);
+            set => _posts = value;
+        }
 
         public int SectionId { get; set; }
 
