@@ -1,4 +1,4 @@
-﻿@model Forum.ViewModels.BaseViewModel
+﻿@model Object
 
 @using Microsoft.AspNetCore.Identity
 @using Forum.Models.Entities;
@@ -11,6 +11,17 @@
 @inject Forum.Data.ApplicationDbContext Context
 @inject IHostingEnvironment Environment
 @{
+    Forum.ViewModels.BaseViewModel model = null;
+
+    if (Model is Forum.ViewModels.BaseViewModel)
+    {
+        model = Model as Forum.ViewModels.BaseViewModel;
+    }
+    else
+    {
+        return;
+    }
+
     var user = UserManager.GetUserAsync(User).Result;
     var pathToProfilePicture = string.Empty;
 
@@ -20,7 +31,7 @@
         //pathToProfilePicture = $"Resources/Images/{user.ProfilePicture.Filename}";
         //pathToProfilePicture = Environment.WebRootFileProvider.GetFileInfo($"Resources/Images/{user.ProfilePicture.Filename}")?.PhysicalPath;
         //$"{this.Request.Scheme}://{this.Request.Host}";
-        pathToProfilePicture = $"{Model.RequestScheme}://{Model.RequestHost}/Resources/Images/{user.ProfilePicture.Filename}";
+        pathToProfilePicture = $"{model.RequestScheme}://{model.RequestHost}/Resources/Images/{user.ProfilePicture.Filename}";
     }
 }
 
