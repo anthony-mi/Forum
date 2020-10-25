@@ -5,34 +5,62 @@
 }
 
 <div class="my-3 p-3 bg-white rounded box-shadow">
-    <strong class="d-block text-gray-dark float-left mr-3 badge badge-primary">@@@Model.Author.UserName</strong>
-    <h3 class="border-bottom border-gray pb-2 mb-0">@Model.Title</h3>
+    <strong class="d-block text-gray-dark float-left mr-5 badge badge-primary">@@@Model.Author.UserName</strong>
+    <h3 class="pb-1 mb-0">@Model.Title</h3>
     <br />
     @{
         if (!string.IsNullOrEmpty(Model.Body))
         {
-            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+            <p class="media-body pb-3 mb-0 small lh-125">
                 <strong class="d-block text-gray-dark">@Model.Body</strong>
             </p>
         }
+
+<div name="topic-controls">
+    @if (Model.CanRemoveTopic)
+    {
+        <a href="@Url.Action("Delete", "Topics", new { id = Model.Id})" class="float-right m-1">
+            <button type="button" class="btn btn-danger">Remove</button>
+        </a>
+    }
+
+    @if (Model.CanEditTopic)
+    {
+        <a href="@Url.Action("Edit", "Topics", new { id = Model.Id})" class="float-right m-1">
+            <button type="button" class="btn btn-primary">Edit</button>
+        </a>
+    }
+</div>
+
+    <br />
+    <br />
+
     }
 
     @foreach (var post in Model.Posts)
     {
-        <strong></strong>
-        <p></p>
-
         <div class="media text-muted pt-3">
             <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
                 <strong class="d-block text-gray-dark">@@@post.Author.UserName</strong>
                 @post.Body
             </p>
+            <div class="float-right">
+                @if (Model.CanRemoveAllAnswers || Model.Author.Id == Model.CurrentUserId)
+                {
+                    <a href="@Url.Action("Delete", "Posts", new { id = post.Id})" class="float-right m-1">
+                        <button type="button" class="badge badge-danger" style="border: none;">Remove</button>
+                    </a>
+                }
+
+                @if (Model.CanEditAllAnswers || Model.Author.Id == Model.CurrentUserId)
+                {
+                    <a href="@Url.Action("Edit", "Posts", new { id = post.Id})" class="float-right m-1">
+                        <button type="button" class="badge badge-primary" style="border: none;">Edit</button>
+                    </a>
+                }
+            </div>
         </div>
     }
-
-    <small class="d-block text-right mt-3">
-        <a href="#">All updates</a>
-    </small>
 </div>
 
 <form asp-action="create" asp-controller="posts" method="post">
