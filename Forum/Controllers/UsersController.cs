@@ -134,5 +134,22 @@ namespace Forum.Controllers
 
             return userRoles;
         }
+
+        public async Task<string> GetUserId(ClaimsPrincipal userClaims)
+        {
+            string id = string.Empty;
+
+            if (userClaims != null)
+            {
+                var user = _userManager.GetUserAsync(userClaims).Result;
+
+                if (user != null)
+                {
+                    id = user.Id;
+                }
+            }
+
+            return id;
+        }
     }
 }
