@@ -16,24 +16,24 @@
             </p>
         }
 
-<div name="topic-controls">
-    @if (Model.CanRemoveTopic)
-    {
-        <a href="@Url.Action("Delete", "Topics", new { id = Model.Id})" class="float-right m-1">
-            <button type="button" class="btn btn-danger">Remove</button>
-        </a>
-    }
+        <div name="topic-controls">
+            @if (Model.CanRemoveTopic)
+            {
+                <a href="@Url.Action("Delete", "Topics", new { id = Model.Id})" class="float-right m-1">
+                    <button type="button" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete topic?')">Remove</button>
+                </a>
+            }
 
-    @if (Model.CanEditTopic)
-    {
-        <a href="@Url.Action("Edit", "Topics", new { id = Model.Id})" class="float-right m-1">
-            <button type="button" class="btn btn-primary">Edit</button>
-        </a>
-    }
-</div>
+            @if (Model.CanEditTopic)
+            {
+                <a href="@Url.Action("Edit", "Topics", new { id = Model.Id})" class="float-right m-1">
+                    <button type="button" class="btn btn-primary">Edit</button>
+                </a>
+            }
+        </div>
 
-    <br />
-    <br />
+        <br />
+        <br />
 
     }
 
@@ -48,7 +48,10 @@
                 @if (Model.CanRemoveAllAnswers || Model.Author.Id == Model.CurrentUserId)
                 {
                     <a href="@Url.Action("Delete", "Posts", new { id = post.Id})" class="float-right m-1">
-                        <button type="button" class="badge badge-danger" style="border: none;">Remove</button>
+                        <button type="button" class="badge badge-danger" style="border: none;"
+                                onclick="return confirm('Are you sure you want to delete post?')">
+                            Remove
+                        </button>
                     </a>
                 }
 
@@ -63,14 +66,19 @@
     }
 </div>
 
-<form asp-action="create" asp-controller="posts" method="post">
-    <div class="form-group">
-        <textarea name="body" class="form-control"></textarea>
-    </div>
-    <div class="form-group">
-        <input type="hidden" name="topicId" value="@Model.Id">
-    </div>
-    <div class="form-group">
-        <input type="submit" value="Create answer" class="btn btn-primary" />
-    </div>
-</form>
+@if (Model.CanCreateAnswer)
+{
+    <h4>Your Answer</h4>
+
+    <form asp-action="create" asp-controller="posts" method="post">
+        <div class="form-group">
+            <textarea name="body" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+            <input type="hidden" name="topicId" value="@Model.Id">
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Create answer" class="btn btn-primary" />
+        </div>
+    </form>
+}

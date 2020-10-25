@@ -56,6 +56,8 @@ namespace Forum.ViewModels
         public bool CanEditAllAnswers { get; set; }
 
         public bool CanRemoveAllAnswers { get; set; }
+
+        public bool CanCreateAnswer { get; set; }
         #endregion
     }
 }

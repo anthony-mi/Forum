@@ -90,6 +90,7 @@ namespace Forum.Controllers
                 viewModel.CanRemoveTopic = false;
                 viewModel.CanEditAllAnswers = false;
                 viewModel.CanRemoveAllAnswers = false;
+                viewModel.CanCreateAnswer = false;
                 return;
             }
 
@@ -101,6 +102,7 @@ namespace Forum.Controllers
                 viewModel.CanRemoveTopic = false;
                 viewModel.CanEditAllAnswers = false;
                 viewModel.CanRemoveAllAnswers = false;
+                viewModel.CanCreateAnswer = false;
                 return;
             }
 
@@ -123,6 +125,8 @@ namespace Forum.Controllers
             viewModel.CanRemoveAllAnswers =
                 isModeratorOfCurrentSection ||
                 claimsPrincipal.IsInRole("Admin");
+
+            viewModel.CanCreateAnswer = true;
         }
 
         private static bool IsOwner(ClaimsPrincipal user, Topic topic)
