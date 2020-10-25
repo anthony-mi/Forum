@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Forum.Data;
 using Forum.Models;
@@ -18,11 +19,16 @@ namespace Forum.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly UserManager<User> _userManager;
+        private readonly UsersController _usersController;
 
-        public TopicsController(ApplicationDbContext dbContext, UserManager<User> userManager)
+        public TopicsController(
+            ApplicationDbContext dbContext, 
+            UserManager<User> userManager,
+            UsersController usersController)
         {
             _dbContext = dbContext;
             _userManager = userManager;
+            _usersController = usersController;
         }
 
         // GET: TopicsController
@@ -34,18 +40,24 @@ namespace Forum.Controllers
         // GET: TopicsController/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var topic = _dbContext.Topics.Include(t => t.Posts).FirstOrDefault(t => t.Id == id);
+            var topic = _dbContext
+                .Topics
+                .Include(t => t.Author)
+                .Include(t => t.Posts)
+                .Include(t => t.Author)
+                .Include(t => t.Section)
+                .FirstOrDefault(t => t.Id == id);
 
             if (topic == null)
             {
                 return Error();
             }
 
-            // Explicit loading of dependent data. The EF did not perform either lazy or explicit data loading.
+            // Explicit loading of dependent data.
+            // The EF Core did not perform lazy data loading.
             // Therefore, I had to implement this little crutch.
             // Discussion of this problem: stackoverflow.com/questions/64094376
-            topic.Author = _dbContext.Users.Where(u => u.Id == topic.AuthorId).FirstOrDefault();
-            topic.Posts = _dbContext.Posts.Where(p => p.TopicId == topic.Id).ToList();
+            topic.Section = _dbContext.Sections.Where(s => s.Id == topic.SectionId).FirstOrDefault();
 
             foreach (var post in topic.Posts)
             {
@@ -53,7 +65,77 @@ namespace Forum.Controllers
             }
 
             var viewModel = new TopicViewModel(topic, Request);
+
+            viewModel.CurrentUserId = _usersController.GetUserId(User).Result;
+
+            SetAccessibilityParams(
+                viewModel, 
+                User,
+                IsOwner(User, topic),
+                topic.Section.Moderators
+                );
+
             return View(viewModel);
+        }
+
+        private void SetAccessibilityParams(
+            TopicViewModel viewModel, 
+            ClaimsPrincipal claimsPrincipal, 
+            bool isOwner,
+            ICollection<Moderator> sectionModerators)
+        {
+            if (claimsPrincipal == null)
+            {
+                viewModel.CanEditTopic = false;
+                viewModel.CanRemoveTopic = false;
+                viewModel.CanEditAllAnswers = false;
+                viewModel.CanRemoveAllAnswers = false;
+                return;
+            }
+
+            var user = _userManager.GetUserAsync(claimsPrincipal).Result;
+
+            if (user == null)
+            {
+                viewModel.CanEditTopic = false;
+                viewModel.CanRemoveTopic = false;
+                viewModel.CanEditAllAnswers = false;
+                viewModel.CanRemoveAllAnswers = false;
+                return;
+            }
+
+            bool isModeratorOfCurrentSection = sectionModerators.Contains(user);
+
+            viewModel.CanEditTopic = 
+                isOwner || 
+                isModeratorOfCurrentSection ||
+                claimsPrincipal.IsInRole("Admin");
+
+            viewModel.CanRemoveTopic =
+                isOwner ||
+                isModeratorOfCurrentSection ||
+                claimsPrincipal.IsInRole("Admin");
+
+            viewModel.CanEditAllAnswers =
+                isModeratorOfCurrentSection ||
+                claimsPrincipal.IsInRole("Admin");
+
+            viewModel.CanRemoveAllAnswers =
+                isModeratorOfCurrentSection ||
+                claimsPrincipal.IsInRole("Admin");
+        }
+
+        private static bool IsOwner(ClaimsPrincipal user, Topic topic)
+        {
+            bool isOwner = false;
+
+            if(user != null)
+            {
+                var currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                isOwner = topic.AuthorId.Equals(currentUserId);
+            }
+
+            return isOwner;
         }
 
         // GET: TopicsController/Create
