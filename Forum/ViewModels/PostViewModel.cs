@@ -6,6 +6,8 @@ namespace Forum.ViewModels
 {
     public class PostViewModel
     {
+        public int Id { get; set; }
+
         public string Body { get; set; }
 
         public virtual User Author { get; set; }
@@ -14,6 +16,7 @@ namespace Forum.ViewModels
 
         public PostViewModel(Post post)
         {
+            Id = post.Id;
             Body = post.Body;
             Author = post.Author;
             Created = post.Created;

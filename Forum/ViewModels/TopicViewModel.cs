@@ -47,5 +47,15 @@ namespace Forum.ViewModels
         public int SectionId { get; set; }
 
         public virtual User Author { get; set; }
+
+        #region "Current user accessibility"
+        public bool CanEditTopic { get; set; }
+
+        public bool CanRemoveTopic { get; set; }
+
+        public bool CanEditAllAnswers { get; set; }
+
+        public bool CanRemoveAllAnswers { get; set; }
+        #endregion
     }
 }
