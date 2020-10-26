@@ -9,6 +9,7 @@ using Forum.Data;
 using Forum.Models;
 using Forum.Models.Entities;
 using Forum.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -53,6 +54,11 @@ namespace Forum.Controllers
                 return Error();
             }
 
+            if(!CanUserViewTopic(User, topic))
+            {
+                return NotFound();
+            }
+
             // Explicit loading of dependent data.
             // The EF Core did not perform lazy data loading.
             // Therefore, I had to implement this little crutch.
@@ -72,17 +78,27 @@ namespace Forum.Controllers
                 viewModel, 
                 User,
                 IsOwner(User, topic),
-                topic.Section.Moderators
+                topic.Section.Moderators,
+                topic.Accessibility
                 );
 
             return View(viewModel);
+        }
+
+        private static bool CanUserViewTopic(ClaimsPrincipal user, Topic topic)
+        {
+            return  user.IsInRole("Administrator") ||
+                    user.IsInRole("Moderator") ||
+                    user.IsInRole("User") ||
+                    topic.Accessibility == Accessibility.FullAccess;
         }
 
         private void SetAccessibilityParams(
             TopicViewModel viewModel, 
             ClaimsPrincipal claimsPrincipal, 
             bool isOwner,
-            ICollection<Moderator> sectionModerators)
+            ICollection<Moderator> sectionModerators,
+            Accessibility topicAccessibility)
         {
             if (claimsPrincipal == null)
             {
@@ -126,7 +142,36 @@ namespace Forum.Controllers
                 isModeratorOfCurrentSection ||
                 claimsPrincipal.IsInRole("Admin");
 
-            viewModel.CanCreateAnswer = true;
+            viewModel.CanCreateAnswer = claimsPrincipal.IsInRole("Administrator") ||
+                    isModeratorOfCurrentSection ||
+                    claimsPrincipal.IsInRole("User") && topicAccessibility == Accessibility.OnlyForUsers ||
+                    claimsPrincipal.IsInRole("User") && topicAccessibility == Accessibility.FullAccess;
+        }
+
+        private bool IsModeratorOfSection(ClaimsPrincipal claimsPrincipal, Section section)
+        {
+            bool isModerator = false;
+
+            do
+            {
+                if (claimsPrincipal == null)
+                {
+                    isModerator = false;
+                    break;
+                }
+
+                var user = _userManager.GetUserAsync(claimsPrincipal).Result;
+
+                if (user == null)
+                {
+                    isModerator = false;
+                    break;
+                }
+
+                isModerator = section.Moderators.Contains(user);
+            } while (false);
+
+            return isModerator;
         }
 
         private static bool IsOwner(ClaimsPrincipal user, Topic topic)
@@ -143,6 +188,7 @@ namespace Forum.Controllers
         }
 
         // GET: TopicsController/Create
+        [Authorize(Roles = "User")]
         public ActionResult Create(int sectionId)
         {
             var vm = new TopicViewModel(Request);
@@ -154,6 +200,7 @@ namespace Forum.Controllers
         // POST: TopicsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Create([Bind("Title,Body,SectionId")] TopicViewModel viewModel)
         {
             if (ModelState.IsValid)
@@ -200,27 +247,113 @@ namespace Forum.Controllers
         }
 
         // GET: TopicsController/Edit/5
+        [Authorize(Roles = "User")]
         public ActionResult Edit(int id)
         {
-            return View();
+            var topic = _dbContext.Topics.FirstOrDefault(topic => topic.Id == id);
+            topic.Section = _dbContext.Sections.FirstOrDefault(s => s.Id == topic.SectionId);
+
+            if (topic == null)
+            {
+                return NotFound();
+            }
+
+            var sections = _dbContext.Sections.ToList();
+
+            return View(new EditTopicViewModel(topic, sections, IsModeratorOfSection(User, topic.Section)));
         }
 
-        // POST: TopicsController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        [Authorize(Roles = "User")]
+        public ActionResult Edit(int id, EditTopicViewModel viewModel)
         {
+            List<string> errorMessages;
+
+            if(!IsValid(viewModel, out errorMessages))
+            {
+                return View("Error", errorMessages);
+            }
+
+            var editedTopic = CreateEditedTopic(viewModel);
+            var topic = _dbContext.Topics.FirstOrDefault(t => t.Id == id);
+
+            topic = editedTopic;
+
+            _dbContext.SaveChangesAsync();
+
+            ViewData["Message"] = "The topic is successfully edited.";
+
+            return View("Success");
+        }
+
+        private Topic CreateEditedTopic(EditTopicViewModel viewModel)
+        {
+            var topic = new Topic();
+
+            topic.Id = viewModel.Id;
+            topic.Title = viewModel.Title;
+            topic.Body = viewModel.Body;
+            topic.Editor = _userManager.GetUserAsync(User).Result;
+            topic.Edited = DateTime.Now;
+            // TODO: implement editing topic accessibility by moderator.
+
+            return topic;
+        }
+
+        private bool IsValid(EditTopicViewModel viewModel, out List<string> errorMessages)
+        {
+            bool isValid = true;
+
+            errorMessages = new List<string>();
+
+            var topic = _dbContext.Topics.FirstOrDefault(t => t.Id == viewModel.Id);
+
+            if (topic == null)
+            {
+                errorMessages.Add("Topic not found.");
+                isValid = false;
+            }
+
+            var vm = new TopicViewModel(topic, Request);
+            topic.Section = _dbContext.Sections.FirstOrDefault(s => s.Id == topic.SectionId);
+            SetAccessibilityParams(vm, User, IsOwner(User, topic), topic.Section.Moderators, topic.Accessibility);
+
+            if (!vm.CanEditTopic)
+            {
+                errorMessages.Add("No editing rights.");
+                return false; // There is no point in validating the next data.
+            }
+
+            if (string.IsNullOrEmpty(viewModel.Title))
+            {
+                errorMessages.Add("Title required.");
+                isValid = false;
+            }
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                int sectionId = Convert.ToInt32(viewModel.SectionId);
+
+                if (_dbContext.Sections.FirstOrDefault(s => s.Id == sectionId) == null)
+                {
+                    errorMessages.Add("Invalid section id.");
+                    isValid = false;
+                }
             }
             catch
             {
-                return View();
+                errorMessages.Add("Invalid section id.");
+                isValid = false;
             }
+
+            topic.Section = _dbContext.Sections.Where(s => s.Id == topic.SectionId).FirstOrDefault();
+
+            return isValid;
         }
 
         // GET: TopicsController/Delete/5
+        [Authorize(Roles = "User")]
         public ActionResult Delete(int id)
         {
             return View();
