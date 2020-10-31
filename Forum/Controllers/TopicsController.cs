@@ -372,26 +372,67 @@ namespace Forum.Controllers
             return isValid;
         }
 
-        // GET: TopicsController/Delete/5
+        [HttpGet]
         [Authorize(Roles = "User")]
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            return View();
-        }
+            var topic = _dbContext.Topics.Find(id);
 
-        // POST: TopicsController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
+            if (topic == null)
+            {
+                return NotFound();
+            }
+
             try
             {
-                return RedirectToAction(nameof(Index));
+               if(!HaveUserRemovingPermissions(User, topic))
+                {
+                    return View("Error", "You don't have permissions to delete the topic.");
+                }
+
+                _dbContext.Topics.Remove(topic);
+                await _dbContext.SaveChangesAsync();
+
+                ViewData["Message"] = $"Topic `{topic.Title}` successfully removed.";
+                ViewData["SectionId"] = topic.SectionId;
+
+                return View("Success");
             }
-            catch
+            catch (DbUpdateException /* ex */)
             {
-                return View();
+                // TODO: Log the error (uncomment ex variable name and write a log).
+                return View("Error", "There was a technical error while trying to delete a topic.");
             }
+        }
+
+        private bool HaveUserRemovingPermissions(ClaimsPrincipal claimsPrincipal, Topic topic)
+        {
+            bool haveRemovingPermissions = false;
+
+            do
+            {
+                if (claimsPrincipal == null)
+                {
+                    haveRemovingPermissions = false;
+                    break;
+                }
+
+                var user = _userManager.GetUserAsync(claimsPrincipal).Result;
+
+                if (user == null)
+                {
+                    haveRemovingPermissions = false;
+                    break;
+                }
+
+                bool isOwner = topic.AuthorId.Equals(user.Id);
+                bool isSectionModerator = topic.Section.Moderators.Contains(user);
+                bool isAdministrator = claimsPrincipal.IsInRole("Admin");
+
+                haveRemovingPermissions = isOwner || isSectionModerator || isAdministrator;
+            } while (false);
+
+            return haveRemovingPermissions;
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
