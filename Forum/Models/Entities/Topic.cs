@@ -9,6 +9,9 @@ namespace Forum.Models.Entities
         private readonly ILazyLoader _lazyLoader;
 
         private ICollection<Post> _posts;
+        private User _author;
+        private User _editor;
+        private Section _section;
 
         public Topic()
         {
@@ -27,7 +30,11 @@ namespace Forum.Models.Entities
 
         public string AuthorId { get; set; }
 
-        public virtual User Author { get; set; }
+        public virtual User Author
+        {
+            get => _lazyLoader.Load(this, ref _author);
+            set => _author = value;
+        }
 
         public DateTime Created { get; set; }
 
@@ -35,7 +42,11 @@ namespace Forum.Models.Entities
 
         public string EditorId { get; set; }
 
-        public virtual User Editor { get; set; }
+        public virtual User Editor
+        {
+            get => _lazyLoader.Load(this, ref _editor);
+            set => _editor = value;
+        }
 
         public virtual ICollection<Post> Posts
         {
@@ -45,7 +56,11 @@ namespace Forum.Models.Entities
 
         public int SectionId { get; set; }
 
-        public virtual Section Section { get; set; }
+        public virtual Section Section
+        {
+            get => _lazyLoader.Load(this, ref _section);
+            set => _section = value;
+        }
 
         public Accessibility Accessibility { get; set; }
     }
