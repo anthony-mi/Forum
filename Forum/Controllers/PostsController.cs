@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Forum.Data;
 using Forum.Models;
 using Forum.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 
 namespace Forum.Controllers
 {
@@ -25,20 +25,21 @@ namespace Forum.Controllers
         }
 
         // GET: PostsController
-        public ActionResult Index()
-        {
-            return View();
-        }
+        //public ActionResult Index()
+        //{
+        //    return View();
+        //}
 
         // GET: PostsController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
+        //public ActionResult Details(int id)
+        //{
+        //    return View();
+        //}
 
         // POST: PostsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Create(string body, int topicId)
         {
             if(string.IsNullOrEmpty(body))
@@ -62,7 +63,6 @@ namespace Forum.Controllers
                 Created = DateTime.Now,
                 Topic = topic
             };
-
 
             post = _dbContext.Posts.Add(post).Entity;
             await _dbContext.SaveChangesAsync();
@@ -90,6 +90,7 @@ namespace Forum.Controllers
         //}
 
         // GET: PostsController/Edit/5
+        [Authorize(Roles = "User")]
         public ActionResult Edit(int id)
         {
             return View();
@@ -98,6 +99,7 @@ namespace Forum.Controllers
         // POST: PostsController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "User")]
         public ActionResult Edit(int id, IFormCollection collection)
         {
             try
@@ -111,25 +113,37 @@ namespace Forum.Controllers
         }
 
         // GET: PostsController/Delete/5
+        [Authorize(Roles = "User")]
         public ActionResult Delete(int id)
         {
-            return View();
+            var post = _dbContext.Posts.Include(p => p.Topic)/*.AsNoTracking()*/.FirstOrDefault(p => p.Id == id);
+
+            if(post == null)
+            {
+                return NotFound();
+            }
+
+            _dbContext.Posts.Remove(post);
+
+            _dbContext.SaveChangesAsync();
+
+            return RedirectToAction("Details", "Topics", new { id = post.Topic.Id });
         }
 
         // POST: PostsController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public ActionResult Delete(int id, IFormCollection collection)
+        //{
+        //    try
+        //    {
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    catch
+        //    {
+        //        return View();
+        //    }
+        //}
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

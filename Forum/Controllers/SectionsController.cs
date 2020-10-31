@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Diagnostics;
@@ -40,25 +39,12 @@ namespace Forum.Controllers
         public IActionResult Index(int id)
         {
             var section = _dbContext.Sections.Include(s => s.Topics).FirstOrDefault(s => s.Id == id);
-            //section.Topics = _dbContext.Entry(section).Collection(s => s.Topics).CurrentValue;
 
             if (section == null)
             {
                 return Error();
             }
 
-            // Explicit loading of dependent data. The EF did not perform either lazy or explicit data loading.
-            // Therefore, I had to implement this little crutch.
-            // Discussion of this problem: stackoverflow.com/questions/64094376
-            section.Topics = _dbContext.Topics.Where(t => t.SectionId == section.Id).Include(t => t.Author).ToList();
-
-            foreach(var topic in section.Topics)
-            {
-                topic.Author = _dbContext.Users.FirstOrDefault(u => u.Id == topic.AuthorId);
-                topic.Posts = _dbContext.Posts.Where(t => t.TopicId == topic.Id).ToList();
-            }
-
-            //var userRoles = ControllerContext.HttpContext.Request;
             var viewModel = CreateSectionViewModelAsync(section, null, topicsPerPage).Result;
             return View(viewModel);
         }
@@ -80,7 +66,6 @@ namespace Forum.Controllers
                 }
 
                 var sectionViewModel = CreateSectionViewModelAsync(section, userRoles, maxCountOfLastTopics).Result;
-                section.Topics = _dbContext.Topics.Where(t => t.SectionId == section.Id).Include(t => t.Author).ToList();
                 result.Add(sectionViewModel);
             }
 
@@ -90,11 +75,6 @@ namespace Forum.Controllers
         private async Task<SectionViewModel> CreateSectionViewModelAsync(Section section, IList<string> userRoles, int maxCountOfLastTopics)
         {
             var sectionVm = new SectionViewModel(section, ControllerContext.HttpContext.Request);
-
-            if (section.Topics == null)
-            {
-                section.Topics = _dbContext.Topics.Where(t => t.SectionId == section.Id).ToList();
-            }
 
             sectionVm.LastTopics = new List<Topic>();
 
