@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+//using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Forum.Controllers
 {
@@ -57,17 +58,6 @@ namespace Forum.Controllers
             if(!CanUserViewTopic(User, topic))
             {
                 return NotFound();
-            }
-
-            // Explicit loading of dependent data.
-            // The EF Core did not perform lazy data loading.
-            // Therefore, I had to implement this little crutch.
-            // Discussion of this problem: stackoverflow.com/questions/64094376
-            topic.Section = _dbContext.Sections.Where(s => s.Id == topic.SectionId).FirstOrDefault();
-
-            foreach (var post in topic.Posts)
-            {
-                post.Author = _dbContext.Users.FirstOrDefault(u => u.Id == post.AuthorId);
             }
 
             var viewModel = new TopicViewModel(topic, Request);
@@ -191,8 +181,8 @@ namespace Forum.Controllers
         [Authorize(Roles = "User")]
         public ActionResult Create(int sectionId)
         {
-            var vm = new TopicViewModel(Request);
-            vm.SectionId = sectionId;
+            var vm = new EditTopicViewModel();
+            vm.SectionId = sectionId.ToString();
 
             return View(vm);
         }
@@ -201,13 +191,25 @@ namespace Forum.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> Create([Bind("Title,Body,SectionId")] TopicViewModel viewModel)
+        public async Task<IActionResult> Create([Bind("Title, Body, SectionId, Accessibility")] EditTopicViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                var user = _userManager.GetUserAsync(HttpContext.User).Result;
+                var user = _userManager.GetUserAsync(User).Result;
 
-                var section = _dbContext.Sections.FirstOrDefault(s => s.Id == viewModel.SectionId);
+                int sectionId = default;
+
+                try
+                {
+                    sectionId = Convert.ToInt32(viewModel.SectionId);
+
+                }
+                catch(Exception)
+                {
+                    return BadRequest();
+                }
+
+                var section = _dbContext.Sections.FirstOrDefault(s => s.Id == sectionId);
 
                 if (section == null)
                 {
@@ -227,11 +229,14 @@ namespace Forum.Controllers
                     AuthorId = user.Id,
                     Author = user,
                     SectionId = section.Id,
-                    Section = section
+                    Section = section,
+                    Accessibility = (Accessibility) Enum.Parse(typeof(Accessibility), viewModel.Accessibility)
                 };
 
                 newTopic = _dbContext.Topics.Add(newTopic).Entity;
                 await _dbContext.SaveChangesAsync();
+
+                user.Topics.Add(newTopic);
 
                 section.Topics.ToList().Add(newTopic);
 
@@ -276,27 +281,42 @@ namespace Forum.Controllers
             }
 
             var editedTopic = CreateEditedTopic(viewModel);
-            var topic = _dbContext.Topics.FirstOrDefault(t => t.Id == id);
 
-            topic = editedTopic;
+            if(editedTopic == null)
+            {
+                return NotFound();
+            }
 
-            _dbContext.SaveChangesAsync();
+            try
+            {
+                _dbContext.Update(editedTopic);
+                _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return View("Error", new List<string> { "Unable to save changes." });
+            }
 
             ViewData["Message"] = "The topic is successfully edited.";
+            ViewData["SectionId"] = viewModel.SectionId;
 
             return View("Success");
         }
 
         private Topic CreateEditedTopic(EditTopicViewModel viewModel)
         {
-            var topic = new Topic();
+            var topic = _dbContext.Topics.FirstOrDefault(t => t.Id.Equals(viewModel.Id));
 
-            topic.Id = viewModel.Id;
+            if(topic == null)
+            {
+                return null;
+            }
+
             topic.Title = viewModel.Title;
             topic.Body = viewModel.Body;
             topic.Editor = _userManager.GetUserAsync(User).Result;
             topic.Edited = DateTime.Now;
-            // TODO: implement editing topic accessibility by moderator.
+            topic.Accessibility = (Accessibility)Enum.Parse(typeof(Accessibility), viewModel.Accessibility);
 
             return topic;
         }
@@ -307,7 +327,7 @@ namespace Forum.Controllers
 
             errorMessages = new List<string>();
 
-            var topic = _dbContext.Topics.FirstOrDefault(t => t.Id == viewModel.Id);
+            var topic = _dbContext.Topics/*.AsNoTracking()*/.FirstOrDefault(t => t.Id == viewModel.Id);
 
             if (topic == null)
             {

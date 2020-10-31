@@ -1,19 +1,18 @@
 ﻿@model Forum.ViewModels.EditTopicViewModel
 
 @{
-    ViewData["Title"] = "New topic";
+    ViewData["Title"] = "Edit topic";
 }
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-}
-
-<h4>New topic</h4>
+<h4>Edit topic</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="create" asp-controller="topics">
+        <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <input asp-for="Id" type="hidden" />
+            </div>
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
@@ -21,11 +20,13 @@
             </div>
             <div class="form-group">
                 <label asp-for="Body" class="control-label"></label>
-                <textarea asp-for="Body" class="form-control"></textarea>
+                <input asp-for="Body" class="form-control" />
                 <span asp-validation-for="Body" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="hidden" asp-for="SectionId" value="@Model.SectionId">
+                <label asp-for="SectionId" class="control-label">Section</label>
+                <select asp-for="SectionId" asp-items="Model.Sections"></select>
+                <span asp-validation-for="SectionId" class="text-danger"></span>
             </div>
             @if (Model.IsCurrentUserModeratorOfSection)
             {
@@ -36,13 +37,13 @@
                 </div>
             }
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a href='@Url.Action("Index", "Sections", new { id = @Model.SectionId })'>Back to section.</a>
+    <a href="@Url.Action("Details", "Topics", new { id = Model.Id })">Go back</a>
 </div>
 
