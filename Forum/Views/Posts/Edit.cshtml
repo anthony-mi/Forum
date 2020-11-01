@@ -1,0 +1,34 @@
+﻿@model Forum.ViewModels.PostViewModel
+
+@{
+    ViewData["Title"] = "Edit post";
+}
+
+<h4>Edit post</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <input asp-for="Id" type="hidden" />
+            </div>
+            <div class="form-group">
+                <input asp-for="TopicId" type="hidden" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Body" class="control-label"></label>
+                <input asp-for="Body" class="form-control" />
+                <span asp-validation-for="Body" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Details", "Topics", new { id = Model.Topic.Id })">Go back</a>
+</div>
+

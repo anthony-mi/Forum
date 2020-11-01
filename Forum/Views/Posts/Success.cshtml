@@ -1,0 +1,14 @@
+﻿
+@{
+    ViewData["Title"] = "Success";
+}
+
+<div class="alert alert-success" role="alert">
+    <p class="h1">Success</p>
+    <br />
+    <p>@ViewData["Message"]</p>
+    <br />
+    Go to <a href='@Url.Action("Details", "Topics", new { id = ViewData["TopicId"] })'>topic.</a>
+</div>
+
+

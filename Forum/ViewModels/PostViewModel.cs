@@ -14,12 +14,23 @@ namespace Forum.ViewModels
 
         public DateTime Created { get; set; }
 
+        public virtual int TopicId { get; set; }
+
+        public virtual Topic Topic { get; set; }
+
+        public PostViewModel()
+        {
+
+        }
+
         public PostViewModel(Post post)
         {
             Id = post.Id;
             Body = post.Body;
             Author = post.Author;
             Created = post.Created;
+            TopicId = post.TopicId;
+            Topic = post.Topic;
         }
     }
 }

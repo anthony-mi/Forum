@@ -1,15 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Forum.Data;
 using Forum.Models;
 using Forum.Models.Entities;
+using Forum.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Forum.Controllers
 {
@@ -24,18 +28,6 @@ namespace Forum.Controllers
             _userManager = userManager;
         }
 
-        // GET: PostsController
-        //public ActionResult Index()
-        //{
-        //    return View();
-        //}
-
-        // GET: PostsController/Details/5
-        //public ActionResult Details(int id)
-        //{
-        //    return View();
-        //}
-
         // POST: PostsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -44,14 +36,14 @@ namespace Forum.Controllers
         {
             if(string.IsNullOrEmpty(body))
             {
-                return Error();
+                return RedirectToAction("Details", "Topics", new { id = topicId });
             };
 
             var topic = _dbContext.Topics.FirstOrDefault(t => t.Id == topicId);
 
             if(topic == null) // Topic doesn't exists.
             {
-                return Error();
+                return RedirectToAction("Details", "Topics", new { id = topicId });
             }
 
             var user = _userManager.GetUserAsync(HttpContext.User).Result;
@@ -74,49 +66,145 @@ namespace Forum.Controllers
             return RedirectToAction("Details", "Topics", new { id = topicId });
         }
 
-        //// POST: PostsController/Create
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Create(IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
         // GET: PostsController/Edit/5
         [Authorize(Roles = "User")]
         public ActionResult Edit(int id)
         {
-            return View();
+            var post = _dbContext.Posts.Find(id);
+
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            return View(new PostViewModel(post));
         }
 
-        // POST: PostsController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "User")]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(int id, PostViewModel viewModel)
         {
+            List<string> errorMessages;
+
+            if (!IsValid(viewModel, out errorMessages))
+            {
+                return View("Error", errorMessages);
+            }
+
+            var editedPost = CreateEditedPostAsync(viewModel).Result;
+
+            if (editedPost == null)
+            {
+                return NotFound();
+            }
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Update(editedPost);
+                await _dbContext.SaveChangesAsync();
             }
-            catch
+            catch (DbUpdateException)
             {
-                return View();
+                return View("Error", new List<string> { "Unable to save changes." });
             }
+
+            ViewData["Message"] = "The post is successfully edited.";
+            ViewData["TopicId"] = viewModel.TopicId;
+
+            return View("Success");
+        }
+
+        private bool IsValid(PostViewModel viewModel, out List<string> errorMessages)
+        {
+            bool isValid = true;
+
+            errorMessages = new List<string>();
+
+            var post = _dbContext.Posts/*.AsNoTracking()*/.Find(viewModel.Id);
+
+            if (post == null)
+            {
+                errorMessages.Add("Post not found.");
+                isValid = false;
+            }
+
+            var topic = _dbContext.Topics.Find(viewModel.TopicId);
+
+            if (topic == null)
+            {
+                errorMessages.Add("Topic not found.");
+                isValid = false;
+            }
+
+            var vm = new PostViewModel(post);
+
+            if (!HaveUserEditingPermissions(User, post))
+            {
+                errorMessages.Add("No editing permissions.");
+                isValid = false; // There is no point in validating the next data.
+            }
+
+            if (string.IsNullOrEmpty(viewModel.Body))
+            {
+                errorMessages.Add("Body required.");
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        private bool HaveUserEditingPermissions(ClaimsPrincipal claimsPrincipal, Post post)
+        {
+            bool haveEditingPermissions = false;
+
+            do
+            {
+                if (claimsPrincipal == null)
+                {
+                    haveEditingPermissions = false;
+                    break;
+                }
+
+                var user = _userManager.GetUserAsync(claimsPrincipal).Result;
+
+                if (user == null)
+                {
+                    haveEditingPermissions = false;
+                    break;
+                }
+
+                bool isOwner = post.AuthorId.Equals(user.Id);
+                bool isSectionModerator = post.Topic.Section.Moderators.Contains(user);
+                bool isAdministrator = claimsPrincipal.IsInRole("Admin");
+
+                haveEditingPermissions = isOwner || isSectionModerator || isAdministrator;
+            } while (false);
+
+            return haveEditingPermissions;
+        }
+
+        private async Task<Post> CreateEditedPostAsync(PostViewModel viewModel)
+        {
+            var post = _dbContext.Posts.Find(viewModel.Id);
+
+            if (post == null)
+            {
+                return null;
+            }
+
+            post.Body = viewModel.Body;
+            post.TopicId = viewModel.TopicId;
+            post.Topic = _dbContext.Topics.Find(viewModel.Id);
+
+            return post;
         }
 
         // GET: PostsController/Delete/5
         [Authorize(Roles = "User")]
         public ActionResult Delete(int id)
         {
-            var post = _dbContext.Posts.Include(p => p.Topic)/*.AsNoTracking()*/.FirstOrDefault(p => p.Id == id);
+            var post = _dbContext.Posts/*.AsNoTracking()*/.FirstOrDefault(p => p.Id == id);
 
             if(post == null)
             {
