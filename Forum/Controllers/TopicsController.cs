@@ -393,6 +393,7 @@ namespace Forum.Controllers
                foreach(var post in topic.Posts)
                {
                     _dbContext.Posts.Remove(post);
+                    post.Author.CountOfMessages--;
                 }
 
                 _dbContext.Topics.Remove(topic);

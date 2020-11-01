@@ -60,6 +60,7 @@ namespace Forum.Controllers
             await _dbContext.SaveChangesAsync();
 
             topic.Posts.ToList().Add(post);
+            user.CountOfMessages++;
 
             await _dbContext.SaveChangesAsync();
 
@@ -196,6 +197,8 @@ namespace Forum.Controllers
             post.Body = viewModel.Body;
             post.TopicId = viewModel.TopicId;
             post.Topic = _dbContext.Topics.Find(viewModel.Id);
+            post.Edited = DateTime.Now;
+            post.Editor = _userManager.GetUserAsync(User).Result;
 
             return post;
         }
@@ -218,6 +221,8 @@ namespace Forum.Controllers
 
             post.Topic.Posts.Remove(post);
             _dbContext.Posts.Remove(post);
+
+            _userManager.GetUserAsync(User).Result.CountOfMessages--;
 
             await _dbContext.SaveChangesAsync();
 
