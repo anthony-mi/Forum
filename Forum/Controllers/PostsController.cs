@@ -202,36 +202,57 @@ namespace Forum.Controllers
 
         // GET: PostsController/Delete/5
         [Authorize(Roles = "User")]
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            var post = _dbContext.Posts/*.AsNoTracking()*/.FirstOrDefault(p => p.Id == id);
+            var post = _dbContext.Posts/*.AsNoTracking()*/.Find(id);
 
             if(post == null)
             {
                 return NotFound();
             }
 
+            if (!HaveUserRemovingPermissions(User, post))
+            {
+                return View("Error", "You don't have permissions to delete the post.");
+            }
+
+            post.Topic.Posts.Remove(post);
             _dbContext.Posts.Remove(post);
 
-            _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
 
-            return RedirectToAction("Details", "Topics", new { id = post.Topic.Id });
+            return RedirectToAction("Details", "Topics", new { id = post.TopicId });
         }
 
-        // POST: PostsController/Delete/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Delete(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
+        private bool HaveUserRemovingPermissions(ClaimsPrincipal claimsPrincipal, Post post)
+        {
+            bool haveRemovingPermissions = false;
+
+            do
+            {
+                if (claimsPrincipal == null)
+                {
+                    haveRemovingPermissions = false;
+                    break;
+                }
+
+                var user = _userManager.GetUserAsync(claimsPrincipal).Result;
+
+                if (user == null)
+                {
+                    haveRemovingPermissions = false;
+                    break;
+                }
+
+                bool isOwner = post.AuthorId.Equals(user.Id);
+                bool isSectionModerator = post.Topic.Section.Moderators.Contains(user);
+                bool isAdministrator = claimsPrincipal.IsInRole("Admin");
+
+                haveRemovingPermissions = isOwner || isSectionModerator || isAdministrator;
+            } while (false);
+
+            return haveRemovingPermissions;
+        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
