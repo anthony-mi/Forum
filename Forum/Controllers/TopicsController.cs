@@ -386,8 +386,13 @@ namespace Forum.Controllers
             try
             {
                if(!HaveUserRemovingPermissions(User, topic))
-                {
+               {
                     return View("Error", "You don't have permissions to delete the topic.");
+               }
+
+               foreach(var post in topic.Posts)
+               {
+                    _dbContext.Posts.Remove(post);
                 }
 
                 _dbContext.Topics.Remove(topic);
