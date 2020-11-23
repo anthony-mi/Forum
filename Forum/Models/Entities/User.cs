@@ -15,6 +15,7 @@ namespace Forum.Models.Entities
 
         private ICollection<Post> _posts;
         private ICollection<Topic> _topics;
+        private ICollection<SectionModerator> _sectionModerators;
         private Image _profilePicture;
 
         public User()
@@ -54,6 +55,12 @@ namespace Forum.Models.Entities
         {
             get => _lazyLoader.Load(this, ref _topics);
             set => _topics = value;
+        }
+
+        public virtual ICollection<SectionModerator> SectionModerators
+        {
+            get => _lazyLoader.Load(this, ref _sectionModerators);
+            set => _sectionModerators = value;
         }
     }
 }

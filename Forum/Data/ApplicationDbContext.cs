@@ -22,9 +22,6 @@ namespace Forum.Data
                 .WithOne(t => t.Section)
                 .HasForeignKey(prop => prop.SectionId);
 
-            modelBuilder.Entity<Section>()
-                .HasMany(s => s.Moderators);
-
             modelBuilder.Entity<Post>()
                 .HasOne(p => p.Editor);
 
@@ -32,9 +29,6 @@ namespace Forum.Data
                 .HasOne(p => p.Author)
                 .WithMany(u => u.Posts)
                 .HasForeignKey(prop => prop.AuthorId);
-
-            modelBuilder.Entity<Moderator>()
-                .HasMany(m => m.ModeratableSections);
 
             modelBuilder.Entity<Topic>()
                 .HasMany(t => t.Posts)
@@ -62,14 +56,27 @@ namespace Forum.Data
                .HasMany(u => u.Topics)
                .WithOne(t => t.Author);
 
+            modelBuilder.Entity<SectionModerator>()
+                .HasKey(sm => new { sm.ModeratorId, sm.SectionId });
+
+            modelBuilder.Entity<SectionModerator>()
+                .HasOne(sm => sm.Moderator)
+                .WithMany(m => m.SectionModerators)
+                .HasForeignKey(sm => sm.ModeratorId);
+
+            modelBuilder.Entity<SectionModerator>()
+               .HasOne(sm => sm.Section)
+               .WithMany(s => s.SectionModerators)
+               .HasForeignKey(sm => sm.SectionId);
+
             base.OnModelCreating(modelBuilder);
         }
 
         public DbSet<Image> Images { get; set; }
         public new DbSet<User> Users { get; set; }
-        public DbSet<Moderator> Moderators { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Topic> Topics { get; set; }
         public DbSet<Section> Sections { get; set; }
+        public DbSet<SectionModerator> SectionModerators { get; set; }
     }
 }

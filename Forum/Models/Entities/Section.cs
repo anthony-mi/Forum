@@ -12,7 +12,7 @@ namespace Forum.Models.Entities
         private readonly ILazyLoader _lazyLoader;
 
         private ICollection<Topic> _topics;
-        private ICollection<Moderator> _moderators;
+        private ICollection<SectionModerator> _sectionModerators;
 
         public Section()
         {
@@ -35,10 +35,10 @@ namespace Forum.Models.Entities
             set => _topics = value;
         }
 
-        public virtual ICollection<Moderator> Moderators
+        public virtual ICollection<SectionModerator> SectionModerators
         {
-            get => _lazyLoader.Load(this, ref _moderators);
-            set => _moderators = value;
+            get => _lazyLoader.Load(this, ref _sectionModerators);
+            set => _sectionModerators = value;
         }
 
         public Accessibility Accessibility { get; set; }

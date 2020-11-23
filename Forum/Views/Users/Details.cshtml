@@ -11,6 +11,11 @@
         @@@Model.Username
     </h3>
 
+    @if (Model.CanEditRoles)
+    {
+        <a href="@Url.Action("Edit", "Roles", new { userId = Model.Id})" class="btn btn-primary float-right mr-1">Edit roles</a>
+    }
+
     <div class="row p-3">
         <div class="card mb-4 box-shadow col-md-4">
             <img class="card-img-top" src="@pathToProfilePicture" style="height: 100%; max-width: 225px; display: block; align-self: center;" alt="">
@@ -33,12 +38,6 @@
                         @foreach (var role in Model.Roles)
                         {
                             <span class="badge badge-secondary">@role</span>
-                        }
-                        @if (Model.CanEditRoles)
-                        {
-                            <a href="@Url.Action("Edit", "Roles", new { id = Model.Id})" class="float-right m-1">
-                                <button type="button" class="badge badge-primary float-right" style="border: none;">Edit</button>
-                            </a>
                         }
                     </li>
                 </ul>
@@ -79,21 +78,21 @@
                 <tbody>
                     @foreach (var post in Model.LastPosts)
                     {
-                    <tr>
-                        @{
-                            if (post.Body.Length > LastPostTextMaxLength)
-                            {
-                                string text = @post.Body.Substring(0, LastPostTextMaxLength) + " ...";
-                                <td>@text</td>
+                        <tr>
+                            @{
+                                if (post.Body.Length > LastPostTextMaxLength)
+                                {
+                                    string text = @post.Body.Substring(0, LastPostTextMaxLength) + " ...";
+                                    <td>@text</td>
+                                }
+                                else
+                                {
+                                    <td>@post.Body</td>
+                                }
                             }
-                            else
-                            {
-                                <td>@post.Body</td>
-                            }
-                        }
-                        <td><a href="@Url.Action("Details", "Topics", new { id = post.Topic.Id })">@post.Topic.Title</a></td>
-                        <td>@post.Created.ToShortDateString()</td>
-                    </tr>
+                            <td><a href="@Url.Action("Details", "Topics", new { id = post.Topic.Id })">@post.Topic.Title</a></td>
+                            <td>@post.Created.ToShortDateString()</td>
+                        </tr>
                     }
                 </tbody>
             </table>

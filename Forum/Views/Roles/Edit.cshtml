@@ -1,0 +1,59 @@
+﻿@model Forum.ViewModels.ChangeRolesViewModel
+
+@{
+    ViewData["Title"] = "Edit topic";
+}
+
+<h4>Edit user roles</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <input asp-for="UserId" type="hidden" />
+            </div>
+            <div class="form-group">
+                <label asp-for="UserRoles" class="control-label">Roles</label>
+                <select id="roles" multiple class="custom-select" asp-for="@Model.UserRoles" asp-items="Model.AllRoles"></select>
+                <span asp-validation-for="UserRoles" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModeratedByUserSections" class="control-label">Sections</label>
+                @{
+                    bool disableSectionsSelection = !Model.UserRoles.Contains("Moderator");
+
+                    if (disableSectionsSelection)
+                    {
+                        <select disabled="disabled" id="sections" multiple class="custom-select" asp-for="@Model.ModeratedByUserSections" asp-items="Model.AvailableSections"></select>
+                    }
+                    else
+                    {
+                        <select id="sections" multiple class="custom-select" asp-for="@Model.ModeratedByUserSections" asp-items="Model.AvailableSections"></select>
+                    }
+
+                }
+                <span asp-validation-for="ModeratedByUserSections" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.js"></script>
+<script>
+    $(document).ready(function () {
+        $('option[value="Moderator"]').attr("id", "moderator");
+
+        $('#roles').change(function () {
+            if ($("#moderator").is(":checked")) {
+                $('#sections').prop('disabled', false);
+            }
+            else {
+                $('#sections').prop('disabled', 'disabled');
+            }
+        });
+    });
+</script>

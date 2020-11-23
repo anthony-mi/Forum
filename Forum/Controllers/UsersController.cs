@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -65,13 +66,16 @@ namespace Forum.Controllers
             var lastTopics = _dbContext.Topics.Where(t => t.AuthorId == user.Id).ToList();
             lastTopics = new List<Topic>(lastTopics.OrderBy(t => t.Created).Take(CountOfLastTopics));
 
+            var currentUser = _userManager.FindByIdAsync(_userManager.GetUserId(User)).Result;
+
             var viewModel = new UserProfileViewModel(
                 user,
                 Request,
                 lastTopics,
                 lastPosts,
                 _userManager.GetRolesAsync(user).Result,
-                _userManager.IsInRoleAsync(user, "Moderator").Result || _userManager.IsInRoleAsync(user, "Admin").Result);
+                
+                currentUser != null && _userManager.IsInRoleAsync(currentUser, "Moderator").Result || _userManager.IsInRoleAsync(currentUser, "Admin").Result);
 
             return View(viewModel);
         }
@@ -139,7 +143,7 @@ namespace Forum.Controllers
             }
         }
 
-        public async Task<IList<string>> GetUserRoles(ClaimsPrincipal userClaims)
+        public async Task<IList<string>> GetUserRolesAsync(ClaimsPrincipal userClaims)
         {
             var userRoles = new List<string> { "Guest" };
 

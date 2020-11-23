@@ -1,12 +1,11 @@
+#define SET_TESTABLE_USER_AS_ADMIN // for testing
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Forum.Data;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +15,7 @@ using Forum.Models.Entities;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Forum.Services;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace Forum
 {
@@ -84,6 +84,22 @@ namespace Forum
             CreateRoles(serviceProvider);
             CreateSections(config, serviceProvider);
             CreateDefaultImages(serviceProvider);
+
+#if SET_TESTABLE_USER_AS_ADMIN && DEBUG
+            AddUserToAdmins(serviceProvider, "5ec74e8b-7f31-4b3b-891a-a7092305fc8f");
+#endif
+        }
+
+        private void AddUserToAdmins(IServiceProvider serviceProvider, string userId)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+            var user = userManager.FindByIdAsync(userId).Result;
+
+            if (user != null)
+            {
+                var result = userManager.AddToRoleAsync(user, "Admin").Result;
+                Debug.Print(result.Succeeded ? "Succeeded" : "Not Succeeded");
+            }
         }
 
         private void CreateRoles(IServiceProvider serviceProvider)

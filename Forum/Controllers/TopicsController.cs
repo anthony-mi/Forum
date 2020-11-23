@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
@@ -68,7 +67,7 @@ namespace Forum.Controllers
                 viewModel, 
                 User,
                 IsOwner(User, topic),
-                topic.Section.Moderators,
+                _dbContext.SectionModerators.Where(sm => sm.SectionId.Equals(topic.SectionId)).Select(sm => sm.Moderator).ToList(),
                 topic.Accessibility
                 );
 
@@ -87,7 +86,7 @@ namespace Forum.Controllers
             TopicViewModel viewModel, 
             ClaimsPrincipal claimsPrincipal, 
             bool isOwner,
-            ICollection<Moderator> sectionModerators,
+            ICollection<User> sectionModerators,
             Accessibility topicAccessibility)
         {
             if (claimsPrincipal == null)
@@ -158,7 +157,10 @@ namespace Forum.Controllers
                     break;
                 }
 
-                isModerator = section.Moderators.Contains(user);
+                isModerator = _dbContext.SectionModerators
+                                .FirstOrDefault(
+                                    sm => sm.SectionId.Equals(section.Id) &&
+                                    sm.ModeratorId.Equals(user.Id)) != null;
             } while (false);
 
             return isModerator;
@@ -337,7 +339,12 @@ namespace Forum.Controllers
 
             var vm = new TopicViewModel(topic, Request);
             topic.Section = _dbContext.Sections.FirstOrDefault(s => s.Id == topic.SectionId);
-            SetAccessibilityParams(vm, User, IsOwner(User, topic), topic.Section.Moderators, topic.Accessibility);
+            SetAccessibilityParams(
+                vm, 
+                User, 
+                IsOwner(User, topic),
+                _dbContext.SectionModerators.Where(sm => sm.SectionId.Equals(topic.SectionId)).Select(sm => sm.Moderator).ToList(), 
+                topic.Accessibility);
 
             if (!vm.CanEditTopic)
             {
@@ -432,7 +439,10 @@ namespace Forum.Controllers
                 }
 
                 bool isOwner = topic.AuthorId.Equals(user.Id);
-                bool isSectionModerator = topic.Section.Moderators.Contains(user);
+                bool isSectionModerator = _dbContext.SectionModerators
+                                            .FirstOrDefault(
+                                                sm => sm.SectionId.Equals(topic.Section.Id) &&
+                                                sm.ModeratorId.Equals(user.Id)) != null;
                 bool isAdministrator = claimsPrincipal.IsInRole("Admin");
 
                 haveRemovingPermissions = isOwner || isSectionModerator || isAdministrator;

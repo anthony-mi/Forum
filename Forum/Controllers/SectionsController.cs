@@ -53,7 +53,7 @@ namespace Forum.Controllers
         {
             var result = new List<SectionViewModel>();
             var sections = _dbContext.Sections.ToArray();
-            var userRoles = _usersController.GetUserRoles(User).Result;
+            var userRoles = _usersController.GetUserRolesAsync(User).Result;
 
             foreach (var section in sections)
             {

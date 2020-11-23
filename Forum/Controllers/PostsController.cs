@@ -176,7 +176,10 @@ namespace Forum.Controllers
                 }
 
                 bool isOwner = post.AuthorId.Equals(user.Id);
-                bool isSectionModerator = post.Topic.Section.Moderators.Contains(user);
+                bool isSectionModerator = _dbContext.SectionModerators
+                                            .FirstOrDefault(
+                                                sm =>   sm.SectionId.Equals(post.Topic.SectionId) &&
+                                                        sm.ModeratorId.Equals(user.Id)) != null;
                 bool isAdministrator = claimsPrincipal.IsInRole("Admin");
 
                 haveEditingPermissions = isOwner || isSectionModerator || isAdministrator;
@@ -250,7 +253,10 @@ namespace Forum.Controllers
                 }
 
                 bool isOwner = post.AuthorId.Equals(user.Id);
-                bool isSectionModerator = post.Topic.Section.Moderators.Contains(user);
+                bool isSectionModerator = _dbContext.SectionModerators
+                                           .FirstOrDefault(
+                                               sm => sm.SectionId.Equals(post.Topic.SectionId) &&
+                                                       sm.ModeratorId.Equals(user.Id)) != null;
                 bool isAdministrator = claimsPrincipal.IsInRole("Admin");
 
                 haveRemovingPermissions = isOwner || isSectionModerator || isAdministrator;
