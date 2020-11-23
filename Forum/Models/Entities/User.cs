@@ -15,6 +15,7 @@ namespace Forum.Models.Entities
 
         private ICollection<Post> _posts;
         private ICollection<Topic> _topics;
+        private Image _profilePicture;
 
         public User()
         {
@@ -30,7 +31,11 @@ namespace Forum.Models.Entities
 
         public int? ProfilePictureId { get; set; }
 
-        public virtual Image ProfilePicture { get; set; }
+        public virtual Image ProfilePicture
+        {
+            get => _lazyLoader.Load(this, ref _profilePicture);
+            set => _profilePicture = value;
+        }
 
         [DefaultValue("")]
         public string About { get; set; }

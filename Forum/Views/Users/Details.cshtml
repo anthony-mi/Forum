@@ -1,0 +1,102 @@
+﻿@model Forum.ViewModels.UserProfileViewModel
+
+@{
+    ViewData["Title"] = $"{Model.Username} profile";
+    var pathToProfilePicture = $"{Model.RequestScheme}://{Model.RequestHost}/{Model.PathToProfilePicture}";
+    const int LastPostTextMaxLength = 15;
+}
+
+<div class="my-3 p-3 bg-white rounded box-shadow container">
+    <h3 class="my-4">
+        @@@Model.Username
+    </h3>
+
+    <div class="row p-3">
+        <div class="card mb-4 box-shadow col-md-4">
+            <img class="card-img-top" src="@pathToProfilePicture" style="height: 100%; max-width: 225px; display: block; align-self: center;" alt="">
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Count of messages: </strong>
+                        @Model.CountOfMessages
+                    </li>
+                    <li class="list-group-item">
+                        <strong>About: </strong>
+                        @Model.About
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Registration: </strong>
+                        @Model.Registration.ToShortDateString()
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Roles: </strong>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <span class="badge badge-secondary">@role</span>
+                        }
+                        @if (Model.CanEditRoles)
+                        {
+                            <a href="@Url.Action("Edit", "Roles", new { id = Model.Id})" class="float-right m-1">
+                                <button type="button" class="badge badge-primary float-right" style="border: none;">Edit</button>
+                            </a>
+                        }
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h3 class="mb-1">Last topics</h3>
+            <table class="table table-striped m-1 mb-3">
+                <thead>
+                    <tr>
+                        <th scope="col">Title</th>
+                        <th scope="col">Count of posts</th>
+                        <th scope="col">Date created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var topic in Model.LastTopics)
+                    {
+                        <tr>
+                            <td><a href="@Url.Action("Details", "Topics", new { id = topic.Id })">@topic.Title</a></td>
+                            <td>@topic.Posts.Count()</td>
+                            <td>@topic.Created.ToShortDateString()</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <h3 class="mb-1">Last posts</h3>
+            <table class="table table-striped m-1 mb-3">
+                <thead>
+                    <tr>
+                        <th scope="col">Text</th>
+                        <th scope="col">Topic</th>
+                        <th scope="col">Date created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var post in Model.LastPosts)
+                    {
+                    <tr>
+                        @{
+                            if (post.Body.Length > LastPostTextMaxLength)
+                            {
+                                string text = @post.Body.Substring(0, LastPostTextMaxLength) + " ...";
+                                <td>@text</td>
+                            }
+                            else
+                            {
+                                <td>@post.Body</td>
+                            }
+                        }
+                        <td><a href="@Url.Action("Details", "Topics", new { id = post.Topic.Id })">@post.Topic.Title</a></td>
+                        <td>@post.Created.ToShortDateString()</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

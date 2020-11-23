@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Forum.Data;
-using Forum.Models;
 using Forum.Models.Entities;
+using Forum.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +15,9 @@ namespace Forum.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _dbContext;
+
+        private const int CountOfLastPosts = 5;
+        private const int CountOfLastTopics = 5;
 
         public UsersController(UserManager<User> userManager,
             ApplicationDbContext dbContext)
@@ -48,9 +50,30 @@ namespace Forum.Controllers
         }
 
         // GET: UserController/Details/5
-        public async Task<ActionResult> Details(int id)
+        public async Task<ActionResult> Details(string id)
         {
-            return View();
+            var user = _dbContext.Users.Find(id);
+
+            if(user == null)
+            {
+                return NotFound();
+            }
+
+            var lastPosts = _dbContext.Posts.Where(t => t.AuthorId == user.Id).ToList();
+            lastPosts = new List<Post>(lastPosts.OrderBy(t => t.Created).Take(CountOfLastPosts));
+
+            var lastTopics = _dbContext.Topics.Where(t => t.AuthorId == user.Id).ToList();
+            lastTopics = new List<Topic>(lastTopics.OrderBy(t => t.Created).Take(CountOfLastTopics));
+
+            var viewModel = new UserProfileViewModel(
+                user,
+                Request,
+                lastTopics,
+                lastPosts,
+                _userManager.GetRolesAsync(user).Result,
+                _userManager.IsInRoleAsync(user, "Moderator").Result || _userManager.IsInRoleAsync(user, "Admin").Result);
+
+            return View(viewModel);
         }
 
         // GET: UserController/Create
