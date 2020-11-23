@@ -6,6 +6,7 @@
 # Hide SMTP-server auth data from public access
 Forum/appsettings.json
 Forum/appsettings.Development.json
+Forum/Properties/*
 
 # User-specific files
 *.rsuser
