@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Forum.Data;
 using Forum.Models.Entities;
+using Forum.Services;
 using Forum.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Forum.Controllers
 {
@@ -16,15 +20,19 @@ namespace Forum.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _dbContext;
+        private readonly IServiceProvider _serviceProvider;
 
         private const int CountOfLastPosts = 5;
         private const int CountOfLastTopics = 5;
 
-        public UsersController(UserManager<User> userManager,
-            ApplicationDbContext dbContext)
+        public UsersController(
+            UserManager<User> userManager,
+            ApplicationDbContext dbContext,
+            IServiceProvider serviceProvider)
         {
             _userManager = userManager;
             _dbContext = dbContext;
+            _serviceProvider = serviceProvider;
         }
 
         // GET: UserController
@@ -80,46 +88,111 @@ namespace Forum.Controllers
             return View(viewModel);
         }
 
-        // GET: UserController/Create
-        public async Task<ActionResult> Create()
-        {
-            return View();
-        }
-
-        // POST: UserController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
         // GET: UserController/Edit/5
-        public async Task<ActionResult> Edit(int id)
+        public async Task<ActionResult> Edit(string id)
         {
-            return View();
+            var user = _dbContext.Users.Find(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return View(new EditUserProfileViewModel(user));
         }
 
         // POST: UserController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(EditUserProfileViewModel model)
         {
-            try
+            var user = await _userManager.FindByIdAsync(model.Id);
+
+            if (user == null)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            IList<string> errorMessages = new List<string>();
+
+            if (!IsValid(model, out errorMessages, user))
             {
-                return View();
+                var viewModel = new ErrorsViewModel
+                {
+                    Title = "User profile validation error",
+                    Text = "Validation errors occurred while editing user profile",
+                    Errors = errorMessages,
+                    GoBackUrl = Url.Action("Edit", "Users", new { userId = model.Id })
+                };
+
+                return View("Errors", viewModel);
             }
+
+            user.UserName = model.Username;
+            user.About = model.About;
+
+            if(model.NewProfilePicture != null)
+            {
+                var userSettings = _serviceProvider.GetRequiredService<IOptions<UserSettings>>();
+                var defaultProfilePicture = userSettings.Value.DefaultProfilePicture;
+                var imagesManager = _serviceProvider.GetRequiredService<ImagesManager>();
+                var newImage = imagesManager.CreateAsync(model.NewProfilePicture).Result;
+
+                newImage = _dbContext.Images.Add(newImage).Entity;
+
+                _dbContext.SaveChanges();
+
+                user.ProfilePicture = newImage;
+
+                if (!user.ProfilePicture.Filename.Equals(defaultProfilePicture))
+                {
+                    if (_dbContext.Images.FirstOrDefault(i => i.Id.Equals(user.ProfilePicture.Id)) == null)
+                    {
+                        _dbContext.Images.Remove(user.ProfilePicture);
+                        _dbContext.SaveChanges();
+                    }
+
+                    imagesManager.RemoveAsync(user.ProfilePicture);
+                }
+            }
+
+            _dbContext.SaveChangesAsync();
+
+            ViewData["Message"] = "Changes saved successfully.";
+
+            return View("Success");
+        }
+
+        private bool IsValid(EditUserProfileViewModel model, out IList<string> errorMessages, User user)
+        {
+            bool isValid = true;
+            var errors = new List<string>();
+
+            if (_userManager.FindByIdAsync(model.Id).Result == null)
+            {
+                errors.Add("User not found.");
+                isValid = false;
+            }
+
+            if(string.IsNullOrEmpty(model.Username))
+            {
+                errors.Add("Username required.");
+                isValid = false;
+            }
+
+
+            if (!model.Username.Equals(user.UserName)) // username was changed
+            {
+                if (_dbContext.Users.FirstOrDefault(u => u.UserName.Equals(model.Username)) != null)
+                {
+                    errors.Add("User with the same username already exists.");
+                    isValid = false;
+                }
+            }
+
+            errorMessages = errors;
+
+            return isValid;
         }
 
         // GET: UserController/Delete/5

@@ -48,7 +48,7 @@
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@user.UserName</a>
             <div class="dropdown-menu" aria-labelledby="profile-dropdown" style="backdrop-filter: blur(15px) saturate(1.5);">
                 <a class="dropdown-item" href="@Url.Action("Details", "Users", new { id = currentUserId })">Your profile</a>
-                <a class="dropdown-item" href="#">Settings</a>
+                <a class="dropdown-item" href="@Url.Action("Edit", "Users", new { id = currentUserId })">Edit profile</a>
                 <form class="form-inline dropdown-item"
                       asp-area="Identity" asp-page="/Account/Logout"
                       asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"

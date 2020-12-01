@@ -1,0 +1,36 @@
+﻿@model Forum.ViewModels.EditUserProfileViewModel
+
+@{
+    ViewData["Title"] = "Edit profile";
+}
+
+<h4>Edit profile @@@Model.Username</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <input asp-for="Id" type="hidden" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Username" class="control-label">Username</label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="About" class="control-label">About</label>
+                <textarea asp-for="About" class="form-control"></textarea>
+                <span asp-validation-for="About" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NewProfilePicture" class="control-label">New profile picture</label>
+                <input asp-for="NewProfilePicture" class="form-control" />
+                <span asp-validation-for="NewProfilePicture" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>

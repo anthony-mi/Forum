@@ -5,6 +5,7 @@
     <UserSecretsId>aspnet-Forum-BE5E30D3-829A-42B0-8284-B99F4E60F743</UserSecretsId>
     <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
     <AspNetCoreModuleName>AspNetCoreModule</AspNetCoreModuleName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

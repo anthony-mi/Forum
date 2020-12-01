@@ -47,6 +47,7 @@ namespace Forum
 
             services.AddSingleton<IEmailSender, MailKitEmailSender>();
             services.AddSingleton<AccessibilityChecker>();
+            services.AddSingleton<ImagesManager>();
 
             services.AddMvc().AddControllersAsServices();
         }
@@ -66,6 +67,7 @@ namespace Forum
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
+            app.UseDefaultFiles();
             app.UseStaticFiles();
 
             app.UseRouting();
